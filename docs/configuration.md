@@ -10,6 +10,7 @@ Cairn reads its startup configuration from environment variables. Everything els
 | `CAIRN_PORT`      | `17420`     | Port the runtime listens on. An integer from 1024 to 65535.                                               |
 | `CAIRN_LOG_LEVEL` | `info`      | Minimum log level: `debug`, `info`, `warn` or `error`.                                                    |
 | `CAIRN_HOME`      | unset       | Absolute path. When set, every Cairn directory is placed under it.                                        |
+| `CAIRN_CLIENT_DIR` | `dist/client` | Directory containing the built interface. Relative paths resolve from the working directory. |
 
 Invalid values stop the runtime at startup with a message naming the variable.
 

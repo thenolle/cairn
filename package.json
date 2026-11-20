@@ -9,12 +9,14 @@
 		"bun": ">=1.4.4"
 	},
 	"scripts": {
-		"start": "bun src/server/index.ts",
-		"dev": "bun --watch src/server/index.ts",
+		"generate": "bun scripts/generate.ts",
+		"dev": "bun scripts/dev.ts",
+		"build": "bun scripts/build.ts",
+		"start": "bun dist/server/index.js",
 		"open": "bun src/server/cli/open.ts",
 		"database": "bun src/server/cli/database.ts",
 		"typecheck": "tsc --noEmit",
-		"check": "bun run typecheck && bun scripts/check-repo.ts"
+		"check": "bun run generate && bun run typecheck && bun scripts/check-repo.ts && bun run build"
 	},
 	"dependencies": {
 		"@gambrel/browser": "0.2.3",

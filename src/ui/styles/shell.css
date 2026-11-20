@@ -1,0 +1,118 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.shell-nav {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  height: 100dvh;
+  padding: 1.5rem 1rem;
+  background: var(--surface-1);
+  border-right: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 2.9rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-s);
+  color: var(--text-muted);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.nav-link:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.nav-link[aria-current='page'] {
+  background: var(--surface-3);
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.shell-main {
+  min-width: 0;
+  padding: clamp(1.25rem, 4vw, 3rem);
+}
+
+.shell-main:focus {
+  outline: none;
+}
+
+@media (max-width:52rem) {
+  .shell {
+    display: block;
+  }
+
+  .shell-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 5;
+    flex-direction: row;
+    justify-content: center;
+    height: auto;
+    padding: 0.5rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom));
+    border-right: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .nav-list {
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .nav-list > li {
+    flex: 1;
+  }
+
+  .nav-link {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+    min-height: 3.25rem;
+    font-size: 0.8rem;
+  }
+
+  .nav-link[aria-current='page'] {
+    box-shadow: inset 0 3px 0 var(--accent);
+  }
+
+  .shell-main {
+    padding-bottom: calc(var(--tab-height) + 2rem + env(safe-area-inset-bottom));
+  }
+}

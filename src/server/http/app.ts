@@ -1,5 +1,11 @@
-import { createApp, text } from '@gambrel/core'
+import { staticFiles } from '@gambrel/bun'
+import { createApp } from '@gambrel/core'
 import type { App } from '@gambrel/core'
+import { createDocumentHandler } from '@gambrel/ssr'
+import { components, hooks, routes } from '../../../.gambrel/manifest.server.ts'
+import { renderError } from '../../ui/error-document.tsx'
+import type { PageContext } from '../../ui/context.server.ts'
+import type { RuntimeInfo } from '../runtime-info.ts'
 import { errorResponse } from './errors.ts'
 import { authenticate } from './middleware/authenticate.ts'
 import { hostGuard } from './middleware/host-guard.ts'
@@ -9,27 +15,46 @@ import { applySecurityHeaders, securityHeaders } from './middleware/security-hea
 import { registerHealthRoute } from './routes/health.ts'
 import { registerPairingRoutes } from './routes/pairing.ts'
 import type { PairingRouteDependencies } from './routes/pairing.ts'
+import { registerPwaRoutes } from './routes/pwa.ts'
 
-export type HttpAppDependencies = PairingRouteDependencies
+export interface HttpAppDependencies extends PairingRouteDependencies {
+	readonly runtime: RuntimeInfo
+	readonly clientDirectory: string
+	readonly development: boolean
+}
 
-/** Builds the runtime's HTTP application with every guard in front of the routes. */
+/**
+ * Builds the HTTP application. Guards run first and wrap every response, including rejections.
+ * Explicit routes win; everything else becomes a page request for the Gambrel document handler.
+ */
 export function createHttpApp(dependencies: HttpAppDependencies): App {
 	const logger = dependencies.logger.child('http')
-	const app = createApp()
+	const { runtime, clientDirectory, development } = dependencies
+	const documents = createDocumentHandler<PageContext>({
+		routes,
+		components,
+		hooks,
+		entry: '/assets/client.js',
+		development,
+		renderError
+	})
+	const app = createApp({ development })
 
 	app.use(securityHeaders())
 	app.use(hostGuard())
 	app.use(originGuard())
 	app.use(requestLogger(logger))
 	app.use(authenticate(dependencies.sessions))
+	app.use(staticFiles({ directory: clientDirectory, prefix: '/assets' }))
 
 	registerHealthRoute(app)
+	registerPwaRoutes(app, clientDirectory)
 	registerPairingRoutes(app, { ...dependencies, logger })
 
-	app.notFound(({ url }) =>
-		url.pathname.startsWith('/api/')
+	app.notFound((context) =>
+		context.url.pathname.startsWith('/api/')
 			? errorResponse(404, 'not_found', 'No such endpoint.')
-			: text('Not Found', { status: 404 })
+			: documents.handle(context.request, { ...context, runtime })
 	)
 
 	app.onError((error, { url }) => {

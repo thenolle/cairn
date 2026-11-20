@@ -9,6 +9,7 @@
 		"jsx": "react-jsx",
 		"jsxImportSource": "@gambrel/view",
 		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
 		"strict": true,
 		"noImplicitAny": true,
 		"strictNullChecks": true,
@@ -26,6 +27,6 @@
 		"skipLibCheck": true,
 		"noEmit": true
 	},
-	"include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.ts"],
+	"include": ["src/**/*.ts", "src/**/*.tsx", "scripts/**/*.ts", ".gambrel/**/*.ts", "gambrel.config.ts"],
 	"exclude": ["node_modules", "dist"]
 }
