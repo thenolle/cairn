@@ -16,7 +16,7 @@ Cairn is released under the PolyForm Strict License 1.0.0, which does not permit
 ## Development setup
 
 ```bash
-git clone [https://github.com/thenolle/cairn.git](https://github.com/thenolle/cairn.git)
+git clone https://github.com/thenolle/cairn.git
 cd cairn
 bun install
 ```
