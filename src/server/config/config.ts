@@ -1,4 +1,5 @@
 import { homedir } from 'node:os'
+import { resolve } from 'node:path'
 import { CairnError } from '../../shared/errors.ts'
 import { logLevels } from '../logging/logger.ts'
 import type { LogLevel } from '../logging/logger.ts'
@@ -14,6 +15,8 @@ export interface Config {
 	readonly host: string
 	readonly port: number
 	readonly logLevel: LogLevel
+	readonly development: boolean
+	readonly clientDirectory: string
 	readonly directories: Directories
 }
 
@@ -49,6 +52,10 @@ function parseLogLevel(raw: string | undefined): LogLevel {
 	return level
 }
 
+function parseClientDirectory(raw: string | undefined): string {
+	return resolve(raw === undefined || raw === '' ? 'dist/client' : raw)
+}
+
 /** Reads the runtime configuration from environment variables. Throws a `CairnError` when a value is invalid. */
 export function loadConfig(source: ConfigSource = {}): Config {
 	const env = source.env ?? Bun.env
@@ -56,6 +63,8 @@ export function loadConfig(source: ConfigSource = {}): Config {
 		host: parseHost(env['CAIRN_HOST']),
 		port: parsePort(env['CAIRN_PORT']),
 		logLevel: parseLogLevel(env['CAIRN_LOG_LEVEL']),
+		development: env['NODE_ENV'] === 'development',
+		clientDirectory: parseClientDirectory(env['CAIRN_CLIENT_DIR']),
 		directories: resolveDirectories({
 			platform: source.platform ?? process.platform,
 			env,

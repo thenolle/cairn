@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { serve } from '@gambrel/bun'
 import type { ServerHandle } from '@gambrel/bun'
@@ -14,6 +14,7 @@ import { createHttpApp } from './http/app.ts'
 import { createLogger } from './logging/logger.ts'
 import { createConsoleSink, createFileSink } from './logging/sinks.ts'
 import type { Directories } from './platform/paths.ts'
+import { createRuntimeInfo } from './runtime-info.ts'
 import { FailureLimiter } from './security/failure-limiter.ts'
 import { PairingService } from './security/pairing.ts'
 import { SessionService } from './security/sessions.ts'
@@ -41,6 +42,10 @@ function main(): void {
 	const sinks = [createConsoleSink(), createFileSink({ directory: config.directories.logs })]
 	const logger = createLogger({ level: config.logLevel, sinks })
 
+	if (!existsSync(join(config.clientDirectory, 'client.js'))) {
+		logger.warn('Interface files were not found. Build them with "bun run build" or set CAIRN_CLIENT_DIR.')
+	}
+
 	const locations = databaseLocations(config.directories)
 	const database = openDatabase(locations.file)
 	const migration = migrate(database, migrations, { backupDirectory: locations.backups })
@@ -53,9 +58,23 @@ function main(): void {
 
 	const pairing = new PairingService({ filePath: join(config.directories.state, 'pairing.json') })
 	const limiter = new FailureLimiter({ maxFailures: 5, windowMs: 60_000 })
+	const host = config.host.includes(':') ? `[${config.host}]` : config.host
+	const runtime = createRuntimeInfo({ schemaVersion: migration.to, address: `${host}:${config.port}` })
 
 	pairing.start()
-	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger }), config.host, config.port)
+	const server = startServer(
+		createHttpApp({
+			pairing,
+			sessions,
+			limiter,
+			logger,
+			runtime,
+			clientDirectory: config.clientDirectory,
+			development: config.development
+		}),
+		config.host,
+		config.port
+	)
 	logger.info(`${appName} runtime listening`, { url: server.url.href })
 
 	let stopping = false

@@ -33,3 +33,4 @@ The runtime trusts code running as the current operating-system user, since that
 - Any process running as the same user can read the pairing code file and pair itself. This matches the privileges such a process already has.
 - Browser sessions are stored as hashes in the local database. They survive restarts and can be revoked.
 - All requests arrive from the same loopback address, so rate limiting applies to pairing attempts rather than to general traffic.
+- The interface's static files, web app manifest, service worker script and offline page are served without a session so the pairing page and the installed app can load. They contain no user data.
