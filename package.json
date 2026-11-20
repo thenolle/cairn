@@ -9,6 +9,22 @@
 		"bun": ">=1.4.4"
 	},
 	"scripts": {
-		"check": "bun scripts/check-repo.ts"
+		"typecheck": "tsc --noEmit",
+		"check": "bun run typecheck && bun scripts/check-repo.ts"
+	},
+	"dependencies": {
+		"@gambrel/browser": "0.2.3",
+		"@gambrel/bun": "0.2.3",
+		"@gambrel/compiler": "0.2.3",
+		"@gambrel/components": "0.2.3",
+		"@gambrel/core": "0.2.3",
+		"@gambrel/icons": "0.2.3",
+		"@gambrel/router": "0.2.3",
+		"@gambrel/ssr": "0.2.3",
+		"@gambrel/view": "0.2.3"
+	},
+	"devDependencies": {
+		"@types/bun": "1.4.5",
+		"typescript": "7.0.2"
 	}
 }
