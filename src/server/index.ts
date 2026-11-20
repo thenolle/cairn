@@ -18,6 +18,8 @@ import { createRuntimeInfo } from './runtime-info.ts'
 import { FailureLimiter } from './security/failure-limiter.ts'
 import { PairingService } from './security/pairing.ts'
 import { SessionService } from './security/sessions.ts'
+import { SqliteGameRepository } from './database/repositories/game-repository.ts'
+import { LibraryService } from './library/library-service.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -69,6 +71,7 @@ function main(): void {
 			limiter,
 			logger,
 			runtime,
+			library: new LibraryService(new SqliteGameRepository(database)),
 			clientDirectory: config.clientDirectory,
 			development: config.development
 		}),

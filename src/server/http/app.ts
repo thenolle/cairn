@@ -3,8 +3,9 @@ import { createApp } from '@gambrel/core'
 import type { App } from '@gambrel/core'
 import { createDocumentHandler } from '@gambrel/ssr'
 import { components, hooks, routes } from '../../../.gambrel/manifest.server.ts'
-import { renderError } from '../../ui/error-document.tsx'
 import type { PageContext } from '../../ui/context.server.ts'
+import { renderError } from '../../ui/error-document.tsx'
+import type { LibraryService } from '../library/library-service.ts'
 import type { RuntimeInfo } from '../runtime-info.ts'
 import { errorResponse } from './errors.ts'
 import { authenticate } from './middleware/authenticate.ts'
@@ -13,12 +14,14 @@ import { originGuard } from './middleware/origin-guard.ts'
 import { requestLogger } from './middleware/request-logger.ts'
 import { applySecurityHeaders, securityHeaders } from './middleware/security-headers.ts'
 import { registerHealthRoute } from './routes/health.ts'
+import { registerLibraryRoutes } from './routes/library.ts'
 import { registerPairingRoutes } from './routes/pairing.ts'
 import type { PairingRouteDependencies } from './routes/pairing.ts'
 import { registerPwaRoutes } from './routes/pwa.ts'
 
 export interface HttpAppDependencies extends PairingRouteDependencies {
 	readonly runtime: RuntimeInfo
+	readonly library: LibraryService
 	readonly clientDirectory: string
 	readonly development: boolean
 }
@@ -29,7 +32,7 @@ export interface HttpAppDependencies extends PairingRouteDependencies {
  */
 export function createHttpApp(dependencies: HttpAppDependencies): App {
 	const logger = dependencies.logger.child('http')
-	const { runtime, clientDirectory, development } = dependencies
+	const { runtime, library, clientDirectory, development } = dependencies
 	const documents = createDocumentHandler<PageContext>({
 		routes,
 		components,
@@ -50,11 +53,12 @@ export function createHttpApp(dependencies: HttpAppDependencies): App {
 	registerHealthRoute(app)
 	registerPwaRoutes(app, clientDirectory)
 	registerPairingRoutes(app, { ...dependencies, logger })
+	registerLibraryRoutes(app, { library, logger })
 
 	app.notFound((context) =>
 		context.url.pathname.startsWith('/api/')
 			? errorResponse(404, 'not_found', 'No such endpoint.')
-			: documents.handle(context.request, { ...context, runtime })
+			: documents.handle(context.request, { ...context, runtime, library })
 	)
 
 	app.onError((error, { url }) => {

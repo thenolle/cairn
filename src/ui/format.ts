@@ -14,3 +14,23 @@ export function formatDuration(totalSeconds: number): string {
 export function formatTimestamp(iso: string): string {
 	return `${iso.slice(0, 10)} ${iso.slice(11, 19)} UTC`
 }
+
+/** Up to two uppercase initials from a game name, used when there is no artwork. */
+export function initials(name: string): string {
+	const words = name.split(/[^\p{L}\p{N}]+/u).filter((word) => word !== '')
+	return words
+		.slice(0, 2)
+		.map((word) => word.charAt(0).toUpperCase())
+		.join('')
+}
+
+/** Formats a timestamp in milliseconds as a UTC date. */
+export function formatDate(milliseconds: number): string {
+	return new Date(milliseconds).toISOString().slice(0, 10)
+}
+
+/** Formats played time, or says that none is recorded. */
+export function formatPlaytime(seconds: number): string {
+	if (seconds <= 0) return 'No playtime recorded'
+	return formatDuration(seconds)
+}
