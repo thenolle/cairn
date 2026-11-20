@@ -32,3 +32,13 @@ Set `CAIRN_HOME` to keep all files in one folder:
 ```bash
 CAIRN_HOME=/path/to/cairn-data bun run start
 ```
+
+## Opening the interface
+
+The runtime only accepts requests from browsers that have been paired with it. Starting the runtime writes a short-lived, single-use pairing code to `state/pairing.json`. The launcher reads it and opens the interface in your default browser:
+
+```bash
+bun run open
+```
+
+The browser shows a confirmation page, and pairing completes when you select **Pair this browser**.
