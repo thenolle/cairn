@@ -9,6 +9,7 @@ export interface SessionStore {
 	get(id: string): SessionRecord | undefined
 	set(id: string, record: SessionRecord): void
 	delete(id: string): void
+	deleteBefore(createdBefore: number, lastSeenBefore: number): void
 }
 
 export class MemorySessionStore implements SessionStore {
@@ -25,11 +26,18 @@ export class MemorySessionStore implements SessionStore {
 	delete(id: string): void {
 		this.records.delete(id)
 	}
+
+	deleteBefore(createdBefore: number, lastSeenBefore: number): void {
+		for (const [id, record] of this.records) {
+			if (record.createdAt < createdBefore || record.lastSeenAt < lastSeenBefore) this.records.delete(id)
+		}
+	}
 }
 
 export interface SessionOptions {
 	readonly idleMs?: number
 	readonly absoluteMs?: number
+	readonly touchIntervalMs?: number
 	readonly now?: () => number
 }
 
@@ -45,12 +53,14 @@ export class SessionService {
 	private readonly store: SessionStore
 	private readonly idleMs: number
 	private readonly absoluteMs: number
+	private readonly touchIntervalMs: number
 	private readonly now: () => number
 
 	constructor(store: SessionStore, options: SessionOptions = {}) {
 		this.store = store
 		this.idleMs = options.idleMs ?? 30 * day
 		this.absoluteMs = options.absoluteMs ?? 90 * day
+		this.touchIntervalMs = options.touchIntervalMs ?? 60_000
 		this.now = options.now ?? Date.now
 	}
 
@@ -71,11 +81,19 @@ export class SessionService {
 			this.store.delete(id)
 			return false
 		}
-		this.store.set(id, { createdAt: record.createdAt, lastSeenAt: now })
+		if (now - record.lastSeenAt >= this.touchIntervalMs) {
+			this.store.set(id, { createdAt: record.createdAt, lastSeenAt: now })
+		}
 		return true
 	}
 
 	revoke(token: string): void {
 		this.store.delete(hashToken(token))
+	}
+
+	/** Removes sessions that can no longer be used. */
+	purgeExpired(): void {
+		const now = this.now()
+		this.store.deleteBefore(now - this.absoluteMs, now - this.idleMs)
 	}
 }

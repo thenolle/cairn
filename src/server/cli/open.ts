@@ -4,16 +4,13 @@ import { CairnError } from '../../shared/errors.ts'
 import { loadConfig } from '../config/config.ts'
 import { openUrl } from '../platform/open-url.ts'
 import { readPairingFile } from '../security/pairing.ts'
+import { isRuntimeRunning, runtimeOrigin } from './runtime.ts'
 
 async function main(): Promise<void> {
 	const config = loadConfig()
-	const host = config.host.includes(':') ? `[${config.host}]` : config.host
-	const origin = `http://${host}:${config.port}`
+	const origin = runtimeOrigin(config)
 
-	try {
-		const response = await fetch(`${origin}/api/health`, { signal: AbortSignal.timeout(2000) })
-		if (!response.ok) throw new Error('unhealthy')
-	} catch {
+	if (!(await isRuntimeRunning(origin))) {
 		throw new CairnError('io_failed', `${appName} is not running. Start it first.`)
 	}
 

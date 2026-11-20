@@ -1,4 +1,9 @@
-export type CairnErrorCode = 'config_invalid' | 'platform_unsupported' | 'io_failed'
+export type CairnErrorCode =
+	| 'config_invalid'
+	| 'platform_unsupported'
+	| 'io_failed'
+	| 'database_incompatible'
+	| 'database_corrupt'
 
 /** An expected failure with a stable code that callers can branch on. */
 export class CairnError extends Error {

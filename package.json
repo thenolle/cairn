@@ -12,6 +12,7 @@
 		"start": "bun src/server/index.ts",
 		"dev": "bun --watch src/server/index.ts",
 		"open": "bun src/server/cli/open.ts",
+		"database": "bun src/server/cli/database.ts",
 		"typecheck": "tsc --noEmit",
 		"check": "bun run typecheck && bun scripts/check-repo.ts"
 	},

@@ -31,5 +31,5 @@ The runtime trusts code running as the current operating-system user, since that
 
 - The runtime listens over plain HTTP on the loopback interface. Traffic never leaves the computer.
 - Any process running as the same user can read the pairing code file and pair itself. This matches the privileges such a process already has.
-- Browser sessions are kept in memory, so browsers must pair again after the runtime restarts.
+- Browser sessions are stored as hashes in the local database. They survive restarts and can be revoked.
 - All requests arrive from the same loopback address, so rate limiting applies to pairing attempts rather than to general traffic.
