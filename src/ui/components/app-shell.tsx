@@ -25,7 +25,7 @@ export function AppShell(props: AppShellProps): Child {
 				</a>
 				<ul class="nav-list">
 					<li>
-						<NavLink href="/" label="Library" active={isActive(props.pathname, '/')}>
+						<NavLink href="/" label="Library" active={isActive(props.pathname, '/') || props.pathname.startsWith('/games')}>
 							<FolderOpen size={22} />
 						</NavLink>
 					</li>

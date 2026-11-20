@@ -16,7 +16,8 @@
 		"open": "bun src/server/cli/open.ts",
 		"database": "bun src/server/cli/database.ts",
 		"typecheck": "tsc --noEmit",
-		"check": "bun run generate && bun run typecheck && bun scripts/check-repo.ts && bun run build"
+		"check": "bun run generate && bun run typecheck && bun scripts/check-repo.ts && bun run build",
+		"seed": "bun scripts/seed-library.ts"
 	},
 	"dependencies": {
 		"@gambrel/browser": "0.2.3",

@@ -16,7 +16,7 @@ async function main(): Promise<void> {
 
 	const pairing = readPairingFile(join(config.directories.state, 'pairing.json'))
 	if (pairing === null || pairing.expiresAt <= Date.now()) {
-		throw new CairnError('io_failed', 'No valid pairing code is available. Try again in a moment.')
+		throw new CairnError('io_failed', 'No pairing code was found. If the runtime was started with CAIRN_HOME, set the same value for this command.')
 	}
 
 	await openUrl(`${origin}/pair?code=${pairing.code}`)
