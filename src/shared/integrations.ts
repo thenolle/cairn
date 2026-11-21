@@ -43,12 +43,12 @@ export const detectionLabels: Readonly<Record<DetectionStatus, string>> = {
 	error: 'Problem'
 }
 
-export interface DetailItem {
+export type DetailItem = {
 	readonly label: string
 	readonly value: string
 }
 
-export interface ScanSummary {
+export type ScanSummary = {
 	readonly adapterId: string
 	readonly at: number
 	readonly ok: boolean
@@ -60,7 +60,7 @@ export interface ScanSummary {
 	readonly warnings: readonly string[]
 }
 
-export interface IntegrationSummary {
+export type IntegrationSummary = {
 	readonly id: string
 	readonly name: string
 	readonly status: DetectionStatus
