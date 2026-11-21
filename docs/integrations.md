@@ -29,3 +29,22 @@ On Windows, Cairn reads the manifest files the Epic Games Launcher writes for in
 - Names are not overwritten, so changes you make by hand are kept.
 
 Epic does not publish a supported way to read this data, so a future launcher update could change what is available.
+
+## Game folders
+
+Add folders on the **Integrations** page, with the platform of the games inside. Cairn scans each folder and the folders within it, up to six levels deep, for these file types:
+
+| Platform | File types |
+| --- | --- |
+| Nintendo Switch | `.nsp`, `.xci`, `.nsz`, `.xcz` |
+| Nintendo 3DS | `.3ds`, `.cia`, `.cxi`, `.3dsx` |
+| Nintendo DS | `.nds` |
+
+- The title comes from the file name. Region and version tags such as `(USA)` and `[v1]` are removed. You can rename a game in Cairn, and the name is kept.
+- Cairn never opens, changes or moves your files.
+- Switch updates and DLC in the same folder appear as separate games. Remove any you do not want.
+- A game whose file is gone is marked as not installed, not removed. Moving or renaming a file adds a new game. If a folder cannot be read, for example because a drive is disconnected, nothing is marked as missing.
+- Removing a folder from Cairn does not delete its games. They are marked as not installed.
+- Hidden files and folders, and shortcuts that point elsewhere, are skipped.
+
+Launching these games needs an emulator integration, which is not available yet.

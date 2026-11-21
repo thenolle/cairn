@@ -471,3 +471,42 @@ font-size: 0.8rem;
 letter-spacing: 0.05em;
 text-transform: uppercase;
 }
+
+.folder-list {
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.folder-list li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.6rem 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.folder-path {
+	overflow-wrap: anywhere;
+}
+
+.folder-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 1rem;
+}
+
+.folder-form .field:first-child {
+	flex: 1 1 20rem;
+}
+
+.folder-error {
+	margin: 0;
+	padding: 0.6rem 0.9rem;
+	border-left: 3px solid #ff9b9b;
+	background: var(--surface-2);
+}

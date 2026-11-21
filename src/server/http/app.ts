@@ -22,6 +22,7 @@ import { registerLibraryRoutes } from './routes/library.ts'
 import { registerPairingRoutes } from './routes/pairing.ts'
 import type { PairingRouteDependencies } from './routes/pairing.ts'
 import { registerPwaRoutes } from './routes/pwa.ts'
+import type { FolderService } from '../library/folder-service.ts'
 
 export interface HttpAppDependencies extends PairingRouteDependencies {
 	readonly runtime: RuntimeInfo
@@ -30,6 +31,7 @@ export interface HttpAppDependencies extends PairingRouteDependencies {
 	readonly integrations: IntegrationService
 	readonly clientDirectory: string
 	readonly development: boolean
+	readonly folders: FolderService
 }
 
 /**
@@ -38,7 +40,7 @@ export interface HttpAppDependencies extends PairingRouteDependencies {
  */
 export function createHttpApp(dependencies: HttpAppDependencies): App {
 	const logger = dependencies.logger.child('http')
-	const { runtime, library, artwork, integrations, clientDirectory, development } = dependencies
+	const { runtime, library, artwork, integrations, clientDirectory, development, folders } = dependencies
 	const documents = createDocumentHandler<PageContext>({
 		routes,
 		components,
@@ -61,12 +63,12 @@ export function createHttpApp(dependencies: HttpAppDependencies): App {
 	registerPairingRoutes(app, { ...dependencies, logger })
 	registerLibraryRoutes(app, { library, artwork, logger })
 	registerArtworkRoutes(app, { library, artwork })
-	registerIntegrationRoutes(app, integrations)
+	registerIntegrationRoutes(app, integrations, folders)
 
 	app.notFound((context) =>
 		context.url.pathname.startsWith('/api/')
 			? errorResponse(404, 'not_found', 'No such endpoint.')
-			: documents.handle(context.request, { ...context, runtime, library, artwork, integrations })
+			: documents.handle(context.request, { ...context, runtime, library, artwork, integrations, folders })
 	)
 
 	app.onError((error, { url }) => {
