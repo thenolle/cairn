@@ -79,6 +79,14 @@ export class LibraryService {
 		return idPattern.test(id) && this.repository.markLaunched(id, this.now())
 	}
 
+	recentlyPlayed(limit = 12): readonly Game[] {
+		return this.repository.listRecentlyPlayed(Math.min(Math.max(limit, 1), maxPageSize))
+	}
+
+	mostPlayed(limit = 10): readonly Game[] {
+		return this.repository.listMostPlayed(Math.min(Math.max(limit, 1), maxPageSize))
+	}
+
 	remove(id: string): boolean {
 		return idPattern.test(id) && this.repository.delete(id)
 	}

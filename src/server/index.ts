@@ -35,6 +35,9 @@ import { SqliteCollectionRepository } from './database/repositories/collection-r
 import { CollectionService } from './library/collection-service.ts'
 import { LaunchService } from './launching/launch-service.ts'
 import { createUrlOpener } from './os/open-url.ts'
+import { ActivityService } from './activity/activity-service.ts'
+import { SqliteActivityRepository } from './database/repositories/activity-repository.ts'
+import { createProcessLister } from './os/process-list.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -53,27 +56,19 @@ function startServer(app: ReturnType<typeof createHttpApp>, host: string, port: 
 function main(): void {
 	const config = loadConfig()
 	ensureDirectories(config.directories)
-
 	const sinks = [createConsoleSink(), createFileSink({ directory: config.directories.logs })]
 	const logger = createLogger({ level: config.logLevel, sinks })
-
 	if (!existsSync(join(config.clientDirectory, 'client.js'))) logger.warn('Interface files were not found. Build them with "bun run build" or set CAIRN_CLIENT_DIR.')
-
 	const locations = databaseLocations(config.directories)
 	const database = openDatabase(locations.file)
 	const migration = migrate(database, migrations, { backupDirectory: locations.backups })
-	if (migration.to !== migration.from) {
-		logger.info('Database migrated', { from: migration.from, to: migration.to })
-	}
-
+	if (migration.to !== migration.from) logger.info('Database migrated', { from: migration.from, to: migration.to })
 	const sessions = new SessionService(new SqliteSessionStore(database))
 	sessions.purgeExpired()
-
 	const pairing = new PairingService({ filePath: join(config.directories.state, 'pairing.json') })
 	const limiter = new FailureLimiter({ maxFailures: 5, windowMs: 60_000 })
 	const host = config.host.includes(':') ? `[${config.host}]` : config.host
 	const runtime = createRuntimeInfo({ schemaVersion: migration.to, address: `${host}:${config.port}` })
-
 	const games = new SqliteGameRepository(database)
 	const folders = new FolderService(new SqliteFolderRepository(database), { caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
 	const collections = new CollectionService(new SqliteCollectionRepository(database))
@@ -83,27 +78,26 @@ function main(): void {
 		createFolderAdapter({ listFolders: () => folders.list() }),
 	]
 	const integrations = new IntegrationService({ adapters, repository: new SqliteDiscoveryRepository(database, games), logger: logger.child('integrations') })
-
 	pairing.start()
 	integrations.scanReady()
-
 	const library = new LibraryService(games)
 	const launcher = new LaunchService({ library: library, adapters, opener: createUrlOpener(process.platform), logger: logger.child('launcher') })
 	const artwork = new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media'))
-	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
+	const activity = new ActivityService({ repository: new SqliteActivityRepository(database), listProcesses: createProcessLister(process.platform), logger: logger.child('activity'), caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
+	activity.start()
+	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, activity, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
 	logger.info(`${appName} runtime listening`, { url: server.url.href })
-
 	let stopping = false
 	const shutdown = async (): Promise<void> => {
 		if (stopping) return
 		stopping = true
 		logger.info(`${appName} runtime stopping`)
 		pairing.stop()
+		activity.stop()
 		await server.stop()
 		closeDatabase(database)
 		await Promise.all(sinks.map((sink) => sink.close()))
 	}
-
 	for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => { void shutdown() })
 }
 

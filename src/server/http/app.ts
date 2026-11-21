@@ -27,6 +27,8 @@ import { registerPwaRoutes } from './routes/pwa.ts'
 import type { FolderService } from '../library/folder-service.ts'
 import type { LaunchService } from '../launching/launch-service.ts'
 import { registerLaunchRoutes } from './routes/launch.ts'
+import type { ActivityService } from '../activity/activity-service.ts'
+import { registerActivityRoutes } from './routes/activity.ts'
 
 export interface HttpAppDependencies extends PairingRouteDependencies {
 	readonly runtime: RuntimeInfo
@@ -38,6 +40,7 @@ export interface HttpAppDependencies extends PairingRouteDependencies {
 	readonly folders: FolderService
 	readonly collections: CollectionService
 	readonly launcher: LaunchService
+	readonly activity: ActivityService
 }
 
 /**
@@ -46,24 +49,15 @@ export interface HttpAppDependencies extends PairingRouteDependencies {
  */
 export function createHttpApp(dependencies: HttpAppDependencies): App {
 	const logger = dependencies.logger.child('http')
-	const { runtime, library, artwork, integrations, clientDirectory, development, folders, collections, launcher } = dependencies
-	const documents = createDocumentHandler<PageContext>({
-		routes,
-		components,
-		hooks,
-		entry: '/assets/client.js',
-		development,
-		renderError
-	})
+	const { runtime, library, artwork, integrations, clientDirectory, development, folders, collections, launcher, activity } = dependencies
+	const documents = createDocumentHandler<PageContext>({ routes, components, hooks, entry: '/assets/client.js', development, renderError })
 	const app = createApp({ development })
-
 	app.use(securityHeaders())
 	app.use(hostGuard())
 	app.use(originGuard())
 	app.use(requestLogger(logger))
 	app.use(authenticate(dependencies.sessions))
 	app.use(staticFiles({ directory: clientDirectory, prefix: '/assets' }))
-
 	registerHealthRoute(app)
 	registerPwaRoutes(app, clientDirectory)
 	registerPairingRoutes(app, { ...dependencies, logger })
@@ -72,13 +66,11 @@ export function createHttpApp(dependencies: HttpAppDependencies): App {
 	registerIntegrationRoutes(app, integrations, folders)
 	registerCollectionRoutes(app, collections)
 	registerLaunchRoutes(app, launcher)
-
-	app.notFound((context) => context.url.pathname.startsWith('/api/') ? errorResponse(404, 'not_found', 'No such endpoint.') : documents.handle(context.request, { ...context, runtime, library, artwork, integrations, folders, collections, launcher }))
-
+	registerActivityRoutes(app, activity)
+	app.notFound((context) => context.url.pathname.startsWith('/api/') ? errorResponse(404, 'not_found', 'No such endpoint.') : documents.handle(context.request, { ...context, runtime, library, artwork, integrations, folders, collections, launcher, activity }))
 	app.onError((error, { url }) => {
 		logger.error('Unhandled request error', { error, path: url.pathname })
 		return applySecurityHeaders(errorResponse(500, 'internal_error', 'Something went wrong.'), url.pathname)
 	})
-
 	return app
 }

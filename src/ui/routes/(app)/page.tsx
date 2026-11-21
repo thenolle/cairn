@@ -17,9 +17,7 @@ export default function HomePage(props: PageProps<ParamsOf<'/'>, LoaderData<type
 				<section class="empty-state" aria-labelledby="empty-title">
 					<h2 id="empty-title">Your library is empty</h2>
 					<p class="muted">Add a game by hand. Games from launchers and emulators will join them once those integrations are set up.</p>
-					<a class="button button-primary" href="/games/new">
-						Add your first game
-					</a>
+					<a class="button button-primary" href="/games/new">Add your first game</a>
 				</section>
 			</div>
 		)
@@ -27,11 +25,7 @@ export default function HomePage(props: PageProps<ParamsOf<'/'>, LoaderData<type
 	return (
 		<div class="home">
 			<Hero game={view.featured} />
-			<div class="rows">
-				{view.rows.map((row) => (
-					<GameRow id={row.id} title={row.title} href={row.href} games={row.games} />
-				))}
-			</div>
+			<div class="rows">{view.rows.map((row) => (<GameRow id={row.id} title={row.title} href={row.href} games={row.games} ranked={row.ranked} />))}</div>
 		</div>
 	)
 }

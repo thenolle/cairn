@@ -89,10 +89,17 @@ async function readLibraryPaths(root: string): Promise<readonly string[]> {
 	return existing
 }
 
-function toGame(appId: string, state: VdfObject): DiscoveredGame | null {
+function toGame(appId: string, state: VdfObject, library: string): DiscoveredGame | null {
 	const name = cleanGameName(vdfString(state, 'name') ?? '')
 	if (name === '' || ignoredAppIds.has(appId) || ignoredNamePrefixes.some((prefix) => name.startsWith(prefix))) return null
-	return { externalId: appId, name, platform: 'pc', installState: installStateOf(Number(vdfString(state, 'StateFlags') ?? '0')) }
+	const folder = vdfString(state, 'installdir')
+	return {
+		externalId: appId,
+		name,
+		platform: 'pc',
+		installState: installStateOf(Number(vdfString(state, 'StateFlags') ?? '0')),
+		installPath:folder !== undefined && folder !== '' && folder !== '.' && folder !== '..' && !/[\\/]/u.test(folder)? join(library, 'steamapps', 'common', folder): undefined
+	}
 }
 
 /** Reads Steam's own library files. It never writes to Steam's folders. */
@@ -169,7 +176,7 @@ export function createSteamAdapter(options: SteamAdapterOptions): PlatformAdapte
 						const tree = text === null ? undefined : parseVdf(text)
 						const state = tree === undefined ? undefined : (vdfObject(tree, 'AppState') ?? vdfObject(tree, 'appstate'))
 						if (state === undefined || vdfString(state, 'appid') !== appId) throw new Error('unexpected manifest')
-						game = toGame(appId, state)
+						game = toGame(appId, state, library)
 					} catch {
 						warnings.push(`${name} could not be read.`)
 						continue
