@@ -2,8 +2,9 @@ import { readdir, stat } from 'node:fs/promises'
 import { isAbsolute, join, win32 } from 'node:path'
 import type { CapabilityMap, CapabilityStatus } from '../../../shared/integrations.ts'
 import type { InstallState } from '../../../shared/library.ts'
-import type { Detection, DiscoveredGame, DiscoveryResult, PlatformAdapter } from '../adapter.ts'
+import type { Detection, DiscoveredGame, DiscoveryResult, LaunchPlan, PlatformAdapter } from '../adapter.ts'
 import { cleanGameName } from '../clean-name.ts'
+import { epicLaunchPlan } from './epic-launch.ts'
 
 export interface EpicAdapterOptions {
 	readonly platform: string
@@ -23,7 +24,7 @@ export const epicCapabilities: CapabilityMap = {
 	discovery: { supported: true },
 	installationDetection: { supported: true },
 	metadata: unsupported('Artwork and descriptions come from metadata providers, which are not connected yet.'),
-	launch: unsupported(notAvailable),
+	launch: { supported: true },
 	install: unsupported(managedByEpic),
 	uninstall: unsupported(managedByEpic),
 	update: unsupported(managedByEpic),
@@ -96,6 +97,11 @@ export function createEpicAdapter(options: EpicAdapterOptions): PlatformAdapter 
 		id: 'epic',
 		name: 'Epic Games',
 		capabilities: epicCapabilities,
+
+		async prepareLaunch(externalId: string): Promise<LaunchPlan | null> {
+			if (options.platform !== 'win32' || !appNamePattern.test(externalId)) return null
+			return epicLaunchPlan(options.env, externalId)
+		},
 
 		async detect(): Promise<Detection> {
 			const folder = manifestsFolder(options)

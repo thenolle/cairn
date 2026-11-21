@@ -29,4 +29,9 @@ export interface PlatformAdapter {
 	readonly capabilities: CapabilityMap
 	detect(): Promise<Detection>
 	discover(): Promise<DiscoveryResult>
+	/** Describes how to start a game, or null when it cannot be started. Adapters without this cannot launch. */
+	prepareLaunch?(externalId: string): Promise<LaunchPlan | null>
 }
+
+/** What an adapter wants started. The launch service validates and executes it; adapters never start processes. */
+export type LaunchPlan = { readonly kind: 'url'; readonly url: string }

@@ -74,3 +74,12 @@ The runtime trusts code running as the current operating-system user, since that
 | --- | --- |
 | Crafted identifiers or names | Identifiers must match the expected format. Names are cleaned, limited in length and stored through parameterized queries. |
 | Redirects after an action | The return address is the page that sent the request, accepted only when it is on the same host and not a network-path address. |
+
+## Launching
+
+| Threat | Mitigation |
+| --- | --- |
+| Opening arbitrary files or programs through the system opener | Only two exact link shapes are accepted, with identifiers limited to letters, digits, dots, underscores and dashes. Everything else is refused. |
+| Command injection | No shell is used. The command is an argument array and the link cannot start with a dash. |
+| Launch spam | Repeated requests for the same game within three seconds are ignored. |
+| Launching from a page on the web | Launch is a form action protected by the same session and origin checks as every other action. |

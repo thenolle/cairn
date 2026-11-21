@@ -8,6 +8,7 @@ export interface HeroGame {
 	readonly platform: string
 	readonly favorite: boolean
 	readonly heroUrl: string | null
+	readonly canLaunch: boolean
 }
 
 export interface HeroProps {
@@ -26,15 +27,16 @@ export function Hero(props: HeroProps): Child {
 					{game.favorite ? <span>In your favorites</span> : null}
 				</p>
 				<div class="hero-actions">
-					<a class="button button-primary" href={`/games/${game.id}`}>
-						Open game
+					{game.canLaunch ? (
+						<form method="post" action={`/actions/games/${game.id}/launch`}>
+							<button class="button button-primary" type="submit">
+								Play
+							</button>
+						</form>
+					) : null}
+					<a class="button button-glass" href={`/games/${game.id}`}>
+						Details
 					</a>
-					<form method="post" action={`/actions/games/${game.id}/favorite`}>
-						<input type="hidden" name="favorite" value={game.favorite ? '0' : '1'} />
-						<button class="button button-glass" type="submit">
-							{game.favorite ? 'Remove from favorites' : 'Add to favorites'}
-						</button>
-					</form>
 				</div>
 			</div>
 		</section>

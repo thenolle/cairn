@@ -75,6 +75,10 @@ export class LibraryService {
 		return idPattern.test(id) && this.repository.setFavorite(id, favorite, this.now())
 	}
 
+	markLaunched(id: string): boolean {
+		return idPattern.test(id) && this.repository.markLaunched(id, this.now())
+	}
+
 	remove(id: string): boolean {
 		return idPattern.test(id) && this.repository.delete(id)
 	}
