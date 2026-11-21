@@ -2,7 +2,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { isAbsolute, join } from 'node:path'
 import type { CapabilityMap, CapabilityStatus } from '../../../shared/integrations.ts'
 import type { InstallState } from '../../../shared/library.ts'
-import type { Detection, DiscoveredGame, DiscoveryResult, PlatformAdapter } from '../adapter.ts'
+import type { Detection, DiscoveredGame, DiscoveryResult, LaunchPlan, PlatformAdapter } from '../adapter.ts'
 import { steamRootCandidates } from './locations.ts'
 import type { Env } from './locations.ts'
 import { parseVdf, vdfObject, vdfString } from './vdf.ts'
@@ -32,7 +32,7 @@ export const steamCapabilities: CapabilityMap = {
 	discovery: { supported: true },
 	installationDetection: { supported: true },
 	metadata: unsupported('Artwork and descriptions come from metadata providers, which are not connected yet.'),
-	launch: unsupported(notAvailable),
+	launch: { supported: true },
 	install: unsupported(managedBySteam),
 	uninstall: unsupported(managedBySteam),
 	update: unsupported(managedBySteam),
@@ -116,6 +116,10 @@ export function createSteamAdapter(options: SteamAdapterOptions): PlatformAdapte
 		id: 'steam',
 		name: 'Steam',
 		capabilities: steamCapabilities,
+
+		async prepareLaunch(externalId: string): Promise<LaunchPlan | null> {
+			return /^\d{1,10}$/u.test(externalId) ? { kind: 'url', url: `steam://rungameid/${externalId}` } : null
+		},
 
 		async detect(): Promise<Detection> {
 			const root = await findRoot()

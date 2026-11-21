@@ -33,6 +33,7 @@ export interface GameRepository {
 	delete(id: string): boolean
 	list(query: GameListQuery): GameListResult
 	count(filter: GameFilter): number
+	markLaunched(id: string, at: number): boolean
 }
 
 interface GameRow {
@@ -96,6 +97,7 @@ export class SqliteGameRepository implements GameRepository {
 	private readonly updateGame
 	private readonly updateFavorite
 	private readonly deleteGame
+	private readonly updateLaunched
 
 	constructor(database: Database) {
 		this.database = database
@@ -104,6 +106,7 @@ export class SqliteGameRepository implements GameRepository {
 		this.updateGame = database.query<unknown, { id: string; name: string; nameKey: string; platform: string; updatedAt: number }>('UPDATE games SET name = $name, name_key = $nameKey, platform = $platform, updated_at = $updatedAt WHERE id = $id')
 		this.updateFavorite = database.query<unknown, { id: string; favorite: number; updatedAt: number }>('UPDATE games SET favorite = $favorite, updated_at = $updatedAt WHERE id = $id')
 		this.deleteGame = database.query<unknown, { id: string }>('DELETE FROM games WHERE id = $id')
+		this.updateLaunched = database.query<unknown, { id: string; at: number }>('UPDATE games SET last_played_at = $at, updated_at = $at WHERE id = $id')
 	}
 
 	insert(game: Game): void {
@@ -168,5 +171,9 @@ export class SqliteGameRepository implements GameRepository {
 		const { clauses, bindings } = filterClauses(filter)
 		const row = this.database.query<{ total: number }, Bindings>(`SELECT COUNT(*) AS total FROM games ${whereOf(clauses)}`).get(bindings)
 		return row?.total ?? 0
+	}
+
+	markLaunched(id: string, at: number): boolean {
+		return this.updateLaunched.run({ id, at }).changes > 0
 	}
 }

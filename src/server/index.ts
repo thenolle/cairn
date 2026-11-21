@@ -33,6 +33,8 @@ import { createFolderAdapter } from './integrations/folders/folder-adapter.ts'
 import { FolderService } from './library/folder-service.ts'
 import { SqliteCollectionRepository } from './database/repositories/collection-repository.ts'
 import { CollectionService } from './library/collection-service.ts'
+import { LaunchService } from './launching/launch-service.ts'
+import { createUrlOpener } from './os/open-url.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -44,9 +46,7 @@ function startServer(app: ReturnType<typeof createHttpApp>, host: string, port: 
 	try {
 		return serve(app, { hostname: host, port })
 	} catch (error) {
-		throw new CairnError('io_failed', `${appName} could not listen on ${host}:${port}. The port may already be in use.`, {
-			cause: error
-		})
+		throw new CairnError('io_failed', `${appName} could not listen on ${host}:${port}. The port may already be in use.`, { cause: error })
 	}
 }
 
@@ -57,9 +57,7 @@ function main(): void {
 	const sinks = [createConsoleSink(), createFileSink({ directory: config.directories.logs })]
 	const logger = createLogger({ level: config.logLevel, sinks })
 
-	if (!existsSync(join(config.clientDirectory, 'client.js'))) {
-		logger.warn('Interface files were not found. Build them with "bun run build" or set CAIRN_CLIENT_DIR.')
-	}
+	if (!existsSync(join(config.clientDirectory, 'client.js'))) logger.warn('Interface files were not found. Build them with "bun run build" or set CAIRN_CLIENT_DIR.')
 
 	const locations = databaseLocations(config.directories)
 	const database = openDatabase(locations.file)
@@ -79,36 +77,20 @@ function main(): void {
 	const games = new SqliteGameRepository(database)
 	const folders = new FolderService(new SqliteFolderRepository(database), { caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
 	const collections = new CollectionService(new SqliteCollectionRepository(database))
-	const integrations = new IntegrationService({
-		adapters: [
-			createSteamAdapter({ platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }),
-			createEpicAdapter({ platform: process.platform, env: Bun.env, manifestsOverride: config.epicManifestsPath }),
-			createFolderAdapter({ listFolders: () => folders.list() }),
-		],
-		repository: new SqliteDiscoveryRepository(database, games),
-		logger: logger.child('integrations')
-	})
+	const adapters = [
+		createSteamAdapter({ platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }),
+		createEpicAdapter({ platform: process.platform, env: Bun.env, manifestsOverride: config.epicManifestsPath }),
+		createFolderAdapter({ listFolders: () => folders.list() }),
+	]
+	const integrations = new IntegrationService({ adapters, repository: new SqliteDiscoveryRepository(database, games), logger: logger.child('integrations') })
 
 	pairing.start()
-	void integrations.scanReady()
-	const server = startServer(
-		createHttpApp({
-			pairing,
-			sessions,
-			limiter,
-			logger,
-			runtime,
-			library: new LibraryService(games),
-			integrations,
-			folders,
-			collections,
-			artwork: new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media')),
-			clientDirectory: config.clientDirectory,
-			development: config.development
-		}),
-		config.host,
-		config.port
-	)
+	integrations.scanReady()
+
+	const library = new LibraryService(games)
+	const launcher = new LaunchService({ library: library, adapters, opener: createUrlOpener(process.platform), logger: logger.child('launcher') })
+	const artwork = new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media'))
+	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
 	logger.info(`${appName} runtime listening`, { url: server.url.href })
 
 	let stopping = false
@@ -122,11 +104,7 @@ function main(): void {
 		await Promise.all(sinks.map((sink) => sink.close()))
 	}
 
-	for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-		process.on(signal, () => {
-			void shutdown()
-		})
-	}
+	for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => { void shutdown() })
 }
 
 try {
