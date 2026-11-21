@@ -44,3 +44,12 @@ The runtime trusts code running as the current operating-system user, since that
 | Path traversal | Files are written to a folder named after the game's identifier, with a name made from the image kind and detected type. Request paths are never used to locate files. |
 | Oversized uploads | The request size must be declared and is limited to 8 MB plus form overhead before the body is read. |
 | Reading images without a session | Images are served only to paired browsers. |
+
+## Reading launcher data
+
+| Threat | Mitigation |
+| --- | --- |
+| Crafted launcher files | Files are size limited, nesting is limited and malformed files are skipped with a warning. File names must match the expected pattern. |
+| Reading outside a library | Only `.acf` manifests named `appmanifest_<number>.acf` are read, from a library's `steamapps` folder. |
+| Running commands from launcher data | Nothing from these files is executed. The only process started during detection is a registry query with fixed arguments. |
+| Modifying a launcher | Adapters only read. |

@@ -1,6 +1,6 @@
 import { notFound } from '@gambrel/router'
 import type { Loader, ParamsOf } from '@gambrel/router'
-import { installStateLabel, platformLabel } from '../../../../../shared/library.ts'
+import { installStateLabel, platformLabel, sourceLabel } from '../../../../../shared/library.ts'
 import type { PageContext } from '../../../../context.server.ts'
 
 export type GameDetails = {
@@ -24,7 +24,7 @@ export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> =
 		id: game.id,
 		name: game.name,
 		platform: platformLabel(game.platform),
-		source: game.source === 'manual' ? 'Added manually' : game.source,
+		source: sourceLabel(game.source),
 		installState: installStateLabel(game.installState),
 		favorite: game.favorite,
 		playtimeSeconds: game.playtimeSeconds,

@@ -74,3 +74,10 @@ export function normalizeName(value: string): string {
 export function searchTokens(text: string, max = 5): readonly string[] {
 	return normalizeName(text).split(' ').filter((token) => token !== '').slice(0, max)
 }
+
+/** The name shown for where a game came from. */
+export function sourceLabel(source: string): string {
+	if (source === 'manual') return 'Added manually'
+	if (source === 'steam') return 'Steam'
+	return source
+}
