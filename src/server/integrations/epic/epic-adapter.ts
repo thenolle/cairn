@@ -70,17 +70,19 @@ async function toGame(record: Record<string, unknown>): Promise<DiscoveredGame |
 	const appName = readString(record, 'AppName')
 	const name = cleanGameName(readString(record, 'DisplayName') ?? '')
 	if (appName === undefined || !appNamePattern.test(appName) || name === '') return null
-
 	const mainGame = readString(record, 'MainGameAppName')
 	if (mainGame !== undefined && mainGame !== appName) return null
 	if (record['bIsApplication'] === false) return null
-
 	let installState: InstallState = record['bIsIncompleteInstall'] === true ? 'unknown' : 'installed'
 	const location = readString(record, 'InstallLocation')
-	if (installState === 'installed' && location !== undefined && isAbsolute(location) && !(await isDirectory(location))) {
-		installState = 'not_installed'
+	if (installState === 'installed' && location !== undefined && isAbsolute(location) && !(await isDirectory(location))) installState = 'not_installed'
+	return {
+		externalId: appName,
+		name,
+		platform: 'pc',
+		installState,
+		installPath: location !== undefined && isAbsolute(location) ? location : undefined
 	}
-	return { externalId: appName, name, platform: 'pc', installState }
 }
 
 /** Reads the manifests the Epic Games Launcher writes for installed games. It never writes to them. */

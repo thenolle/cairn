@@ -4,11 +4,12 @@ import type { Child } from '@gambrel/view'
 import { GameTile } from '../../../../components/game-tile.tsx'
 import { formatDate, formatPlaytime, hueClass } from '../../../../format.ts'
 import type { loader } from './page.server.ts'
+import { LiveBadge } from '../../../../components/live-badge.tsx'
 
 export default function GamePage(props: PageProps<ParamsOf<'/games/[id]'>, LoaderData<typeof loader>>): Child {
 	const game = props.data
 	return (
-		<div class="game-page">
+		<div class="game-page" data-game-page={game.id}>
 			<section class={`hero hero-tall ${hueClass(game.name)}`} aria-label={game.name}>
 				{game.heroUrl === null ? null : <img class="hero-art" src={game.heroUrl} alt="" decoding="async" />}
 				<div class="hero-body hero-body-row">
@@ -17,6 +18,7 @@ export default function GamePage(props: PageProps<ParamsOf<'/games/[id]'>, Loade
 						<a class="back-link" href="/library">← Library</a>
 						<h1>{game.name}</h1>
 						<p class="hero-meta">
+							<LiveBadge gameId={game.id} live={game.activeSince !== null} />
 							<span class="badge">{game.platform}</span>
 							<span>{game.source}</span>
 							{game.favorite ? <span>Favorite</span> : null}
@@ -75,6 +77,19 @@ export default function GamePage(props: PageProps<ParamsOf<'/games/[id]'>, Loade
 						<button class="button button-secondary" type="submit">Add</button>
 					</form>)}
 				</section>
+				{game.sessions.length === 0 ? null : (
+					<section class="collections-panel" aria-labelledby="sessions-title">
+						<h2 id="sessions-title">Recent sessions</h2>
+						<ul class="session-list">
+							{game.sessions.map((session) => (
+								<li>
+									<span>{formatDate(session.startedAt)}</span>
+									<span class="muted">{formatPlaytime(session.seconds)}</span>
+								</li>
+							))}
+						</ul>
+					</section>
+				)}
 				<details class="danger-zone">
 					<summary>Remove from library</summary>
 					<p class="muted">This removes the entry from Cairn. Game files on disk are not touched.</p>

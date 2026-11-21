@@ -83,3 +83,12 @@ The runtime trusts code running as the current operating-system user, since that
 | Command injection | No shell is used. The command is an argument array and the link cannot start with a dash. |
 | Launch spam | Repeated requests for the same game within three seconds are ignored. |
 | Launching from a page on the web | Launch is a form action protected by the same session and origin checks as every other action. |
+
+## Activity tracking
+
+| Threat | Mitigation |
+| --- | --- |
+| Exposing what you play | The activity endpoint is behind the same pairing, host and origin checks as every other route. |
+| Exposing process details | Only executable paths are compared in memory. Arguments are not stored or logged. |
+| Command injection | The PowerShell script is fixed text, and other commands take no input. No shell is used. |
+| Resource use | One check runs at a time, with a 10 second timeout, and nothing runs when there are no installed games with a known folder. |

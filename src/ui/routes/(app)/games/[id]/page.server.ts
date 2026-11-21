@@ -9,6 +9,8 @@ export type CollectionRef = {
 	readonly name: string
 }
 
+export type SessionView = { readonly startedAt: number; readonly seconds: number }
+
 export type GameDetails = {
 	readonly id: string
 	readonly name: string
@@ -25,6 +27,8 @@ export type GameDetails = {
 	readonly notice: { readonly message: string; readonly ok: boolean } | null
 	readonly collections: readonly CollectionRef[]
 	readonly otherCollections: readonly CollectionRef[]
+	readonly activeSince: number | null
+	readonly sessions: readonly SessionView[]
 }
 
 export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> = ({ params, search, context }) => {
@@ -49,6 +53,8 @@ export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> =
 		canLaunch: context.launcher.canLaunch(game.source) && game.installState === 'installed',
 		notice: outcome !== null && isLaunchOutcome(outcome) ? { message: launchMessages[outcome], ok: outcome === 'started' } : null,
 		collections: member.map((collection) => ({ id: collection.id, name: collection.name })),
-		otherCollections: context.collections.list().filter((collection) => !memberIds.has(collection.id)).map((collection) => ({ id: collection.id, name: collection.name }))
+		otherCollections: context.collections.list().filter((collection) => !memberIds.has(collection.id)).map((collection) => ({ id: collection.id, name: collection.name })),
+		activeSince: context.activity.activeSince(game.id),
+		sessions: context.activity.recentSessions(game.id, 5).filter((session) => session.endedAt !== null).map((session) => ({ startedAt: session.startedAt, seconds: session.seconds })),
 	}
 }

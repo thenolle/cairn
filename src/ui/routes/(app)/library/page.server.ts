@@ -9,6 +9,8 @@ export type GameCardView = {
 	readonly platform: string
 	readonly favorite: boolean
 	readonly coverUrl: string | null
+	readonly heroUrl: string | null
+	readonly canLaunch: boolean
 }
 
 export type LibraryView = {
@@ -39,27 +41,18 @@ export const loader: Loader<ParamsOf<'/library'>, LibraryView, PageContext> = ({
 		favoritesOnly: params.get('favorites') === '1',
 		collectionId: selected?.id ?? null
 	}
-
 	const page = context.library.list({ ...filter, sort, cursor: params.get('after') })
 	const urls = context.artwork.urlsFor(page.games.map((game) => game.id))
 	const total = context.library.count(filter)
 	const filtered = filter.text !== '' || filter.platform !== null || filter.favoritesOnly || selected !== undefined
-
 	let nextHref: string | null = null
 	if (page.nextCursor !== null) {
 		params.set('after', page.nextCursor)
 		nextHref = `/library?${params.toString()}`
 	}
-
 	return {
 		title: selected?.name ?? 'Library',
-		games: page.games.map((game) => ({
-			id: game.id,
-			name: game.name,
-			platform: platformLabel(game.platform),
-			favorite: game.favorite,
-			coverUrl: urls.get(game.id)?.cover ?? null
-		})),
+		games: page.games.map((game) => ({ id: game.id, name: game.name, platform: platformLabel(game.platform), favorite: game.favorite, coverUrl: urls.get(game.id)?.cover ?? null, heroUrl: urls.get(game.id)?.hero ?? null, canLaunch: context.launcher.canLaunch(game.source) && game.installState === 'installed' })),
 		total,
 		isEmpty: total === 0 && !filtered,
 		filters: {
@@ -69,10 +62,7 @@ export const loader: Loader<ParamsOf<'/library'>, LibraryView, PageContext> = ({
 			favoritesOnly: filter.favoritesOnly,
 			sort
 		},
-		collectionOptions: [
-			{ value: '', label: 'All collections' },
-			...context.collections.list().map((collection) => ({ value: collection.id, label: collection.name }))
-		],
-		nextHref
+		collectionOptions: [{ value: '', label: 'All collections' }, ...context.collections.list().map((collection) => ({ value: collection.id, label: collection.name }))],
+		nextHref,
 	}
 }

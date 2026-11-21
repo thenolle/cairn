@@ -1,5 +1,6 @@
 import { hydrateRoutes } from '@gambrel/browser'
 import { components, routes } from '../../.gambrel/manifest.client.ts'
+import { initActivity } from './activity.ts'
 import { initRows, initTopbar } from './enhance.ts'
 import { registerServiceWorker } from './pwa.ts'
 
@@ -11,4 +12,5 @@ try {
 
 initTopbar()
 initRows()
+initActivity()
 registerServiceWorker()

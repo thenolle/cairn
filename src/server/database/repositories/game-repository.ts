@@ -34,6 +34,8 @@ export interface GameRepository {
 	list(query: GameListQuery): GameListResult
 	count(filter: GameFilter): number
 	markLaunched(id: string, at: number): boolean
+	listRecentlyPlayed(limit: number): readonly Game[]
+	listMostPlayed(limit: number): readonly Game[]
 }
 
 interface GameRow {
@@ -175,5 +177,13 @@ export class SqliteGameRepository implements GameRepository {
 
 	markLaunched(id: string, at: number): boolean {
 		return this.updateLaunched.run({ id, at }).changes > 0
+	}
+
+	listRecentlyPlayed(limit: number): readonly Game[] {
+		return this.database.query<GameRow, { limit: number }>('SELECT * FROM games WHERE last_played_at IS NOT NULL ORDER BY last_played_at DESC, id DESC LIMIT $limit').all({ limit }).map(toGame)
+	}
+
+	listMostPlayed(limit: number): readonly Game[] {
+		return this.database.query<GameRow, { limit: number }>('SELECT * FROM games WHERE playtime_seconds > 0 ORDER BY playtime_seconds DESC, id DESC LIMIT $limit').all({ limit }).map(toGame)
 	}
 }

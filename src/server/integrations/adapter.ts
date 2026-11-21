@@ -6,6 +6,7 @@ export interface DiscoveredGame {
 	readonly name: string
 	readonly platform: string
 	readonly installState: InstallState
+	readonly installPath?: string | undefined
 }
 
 export interface Detection {
