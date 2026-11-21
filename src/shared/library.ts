@@ -79,5 +79,7 @@ export function searchTokens(text: string, max = 5): readonly string[] {
 export function sourceLabel(source: string): string {
 	if (source === 'manual') return 'Added manually'
 	if (source === 'steam') return 'Steam'
+	if (source === 'epic') return 'Epic Games'
+	if (source === 'folders') return 'Game folder'
 	return source
 }

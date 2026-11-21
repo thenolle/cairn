@@ -28,6 +28,9 @@ import { IntegrationService } from './integrations/integration-service.ts'
 import { createSteamAdapter } from './integrations/steam/steam-adapter.ts'
 import { readSteamRegistryPath } from './integrations/steam/windows-registry.ts'
 import { createEpicAdapter } from './integrations/epic/epic-adapter.ts'
+import { SqliteFolderRepository } from './database/repositories/folder-repository.ts'
+import { createFolderAdapter } from './integrations/folders/folder-adapter.ts'
+import { FolderService } from './library/folder-service.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -72,10 +75,12 @@ function main(): void {
 	const runtime = createRuntimeInfo({ schemaVersion: migration.to, address: `${host}:${config.port}` })
 
 	const games = new SqliteGameRepository(database)
+	const folders = new FolderService(new SqliteFolderRepository(database), { caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
 	const integrations = new IntegrationService({
 		adapters: [
 			createSteamAdapter({ platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }),
 			createEpicAdapter({ platform: process.platform, env: Bun.env, manifestsOverride: config.epicManifestsPath }),
+			createFolderAdapter({ listFolders: () => folders.list() }),
 		],
 		repository: new SqliteDiscoveryRepository(database, games),
 		logger: logger.child('integrations')
@@ -92,6 +97,7 @@ function main(): void {
 			runtime,
 			library: new LibraryService(games),
 			integrations,
+			folders,
 			artwork: new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media')),
 			clientDirectory: config.clientDirectory,
 			development: config.development

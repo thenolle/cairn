@@ -5,6 +5,7 @@ import { capabilities, capabilityLabels, detectionLabels } from '../../../../sha
 import type { CapabilityStatus, IntegrationSummary } from '../../../../shared/integrations.ts'
 import { formatTimestamp } from '../../../format.ts'
 import type { loader } from './page.server.ts'
+import { FolderSection } from '../../../components/folder-section.tsx'
 
 function describe(status: CapabilityStatus): { readonly text: string; readonly note: string } {
 	return status.supported ? { text: 'Supported', note: '' } : { text: 'Not available', note: status.reason }
@@ -88,6 +89,7 @@ export default function IntegrationsPage(props: PageProps<ParamsOf<'/integration
 				<h1>Integrations</h1>
 				<p class="muted">Where Cairn finds games, and what it can do with each source. Cairn only reads from these sources.</p>
 			</header>
+			<FolderSection folders={props.data.folders} error={props.data.folderError} />
 			{props.data.integrations.map((integration) => (
 				<Integration integration={integration} />
 			))}

@@ -58,3 +58,12 @@ The runtime trusts code running as the current operating-system user, since that
 | --- | --- |
 | Crafted Epic manifests | Only `.item` files up to 1 MB are parsed. Identifiers must match a strict pattern, names are cleaned, and malformed files are skipped with a warning. |
 | Reading an install folder | The install location is only checked for existence. Nothing in it is read or run. |
+
+## Game folders
+
+| Threat | Mitigation |
+| --- | --- |
+| Scanning an unintended location | Folders are added by the paired local user only. Paths must be absolute, exist, and be folders. |
+| Endless or huge scans | Depth, entries and games are limited per scan. Symbolic links and hidden entries are skipped, so loops cannot occur. |
+| Reading file contents | Files are never opened. Only names and types are used. |
+| A disconnected drive hiding games | A scan with any unreadable folder never marks games as missing. |
