@@ -6,6 +6,7 @@ import type { CapabilityStatus, IntegrationSummary } from '../../../../shared/in
 import { formatTimestamp } from '../../../format.ts'
 import type { loader } from './page.server.ts'
 import { FolderSection } from '../../../components/folder-section.tsx'
+import { EmulatorSection } from '../../../components/emulator-section.tsx'
 
 function describe(status: CapabilityStatus): { readonly text: string; readonly note: string } {
 	return status.supported ? { text: 'Supported', note: '' } : { text: 'Not available', note: status.reason }
@@ -31,32 +32,13 @@ function Integration(props: { readonly integration: IntegrationSummary }): Child
 					))}
 				</dl>
 			)}
-
-			{integration.status === 'ready' ? (
-				<form method="post" action={`/actions/integrations/${integration.id}/scan`}>
-					<button class="button button-primary" type="submit">
-						Scan now
-					</button>
-				</form>
-			) : null}
-
+			{integration.status === 'ready' ? (<form method="post" action={`/actions/integrations/${integration.id}/scan`}><button class="button button-primary" type="submit">Scan now</button></form>) : null}
 			{scan === null ? null : (
 				<div class="scan-result" role="status">
-					<p>
-						{scan.ok
-							? `${formatTimestamp(new Date(scan.at).toISOString())}: ${scan.found} found, ${scan.added} added, ${scan.updated} updated, ${scan.markedNotInstalled} marked not installed.`
-							: `${formatTimestamp(new Date(scan.at).toISOString())}: ${scan.message}`}
-					</p>
-					{scan.warnings.length === 0 ? null : (
-						<ul class="muted">
-							{scan.warnings.map((warning) => (
-								<li>{warning}</li>
-							))}
-						</ul>
-					)}
+					<p>{scan.ok ? `${formatTimestamp(new Date(scan.at).toISOString())}: ${scan.found} found, ${scan.added} added, ${scan.updated} updated, ${scan.markedNotInstalled} marked not installed.` : `${formatTimestamp(new Date(scan.at).toISOString())}: ${scan.message}`}</p>
+					{scan.warnings.length === 0 ? null : (<ul class="muted">{scan.warnings.map((warning) => (<li>{warning}</li>))}</ul>)}
 				</div>
 			)}
-
 			<table class="capabilities">
 				<thead>
 					<tr>
@@ -90,9 +72,8 @@ export default function IntegrationsPage(props: PageProps<ParamsOf<'/integration
 				<p class="muted">Where Cairn finds games, and what it can do with each source. Cairn only reads from these sources.</p>
 			</header>
 			<FolderSection folders={props.data.folders} error={props.data.folderError} />
-			{props.data.integrations.map((integration) => (
-				<Integration integration={integration} />
-			))}
+			<EmulatorSection emulators={props.data.emulators} error={props.data.emulatorError} />
+			{props.data.integrations.map((integration) => (<Integration integration={integration} />))}
 		</div>
 	)
 }

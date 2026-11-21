@@ -7,6 +7,7 @@ import type { FolderService } from '../server/library/folder-service.ts'
 import type { LibraryService } from '../server/library/library-service.ts'
 import type { RuntimeInfo } from '../server/runtime-info.ts'
 import type { ActivityService } from '../server/activity/activity-service.ts'
+import type { EmulatorService } from '../server/emulators/emulator-service.ts'
 
 /** What page guards and loaders receive. */
 export interface PageContext extends Context {
@@ -18,4 +19,5 @@ export interface PageContext extends Context {
 	readonly collections: CollectionService
 	readonly launcher: LaunchService
 	readonly activity: ActivityService
+	readonly emulators: EmulatorService
 }

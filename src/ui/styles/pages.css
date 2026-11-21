@@ -1,104 +1,95 @@
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 64rem;
-}
-
 .page-header h1 {
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+	font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+	font-weight: 700;
+	line-height: 1.15;
 }
 
 .page-header p {
-  margin-top: 0.5rem;
-  max-width: 40rem;
+	margin-top: 0.5rem;
+	max-width: 40rem;
 }
 
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: clamp(1.5rem, 4vw, 3rem);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-l);
-  background: var(--surface-1);
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.75rem;
+	padding: clamp(1.5rem, 4vw, 3rem);
+	border: 1px dashed var(--line);
+	border-radius: var(--radius-m);
+	background: var(--surface-1);
 }
 
 .empty-state h2 {
-  font-size: 1.35rem;
+	font-size: 1.35rem;
 }
 
 .empty-state p {
-  max-width: 36rem;
+	max-width: 36rem;
 }
 
 .facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: 1rem;
-  margin: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+	gap: 1rem;
+	margin: 0;
 }
 
 .fact {
-  padding: 1.1rem 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-m);
-  background: var(--surface-1);
-  box-shadow: var(--shadow);
+	padding: 1.1rem 1.25rem;
+	border-radius: var(--radius-m);
+	background: var(--surface-1);
 }
 
 .fact dt {
-  font-size: 0.8rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+	font-size: 0.8rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-muted);
 }
 
 .fact dd {
-  margin: 0.35rem 0 0;
-  font-size: 1.15rem;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.status::before {
-  content: '';
-  width: 0.6rem;
-  height: 0.6rem;
-  border-radius: 50%;
-  background: var(--success);
+	margin: 0.35rem 0 0;
+	font-size: 1.15rem;
+	font-weight: 600;
+	overflow-wrap: anywhere;
 }
 
 .standalone-page {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 100dvh;
-  max-width: 32rem;
-  margin: 0 auto;
-  padding: 2rem;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 1rem;
+	min-height: 100dvh;
+	max-width: 32rem;
+	margin: 0 auto;
+	padding: 2rem;
 }
 
 .standalone-page h1 {
-  font-size: clamp(1.75rem, 5vw, 2.5rem);
-  line-height: 1.15;
+	font-size: clamp(1.75rem, 5vw, 2.5rem);
+	line-height: 1.15;
 }
 
 .eyebrow {
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
+	font-size: 0.85rem;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--accent);
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.status::before {
+	content: '';
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background: var(--success);
 }

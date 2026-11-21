@@ -34,5 +34,10 @@ export interface PlatformAdapter {
 	prepareLaunch?(externalId: string): Promise<LaunchPlan | null>
 }
 
-/** What an adapter wants started. The launch service validates and executes it; adapters never start processes. */
-export type LaunchPlan = { readonly kind: 'url'; readonly url: string }
+/** What an adapter wants started. The launch service validates and performs it; adapters never start processes. */
+export type LaunchPlan =
+	| { readonly kind: 'url'; readonly url: string }
+	| { readonly kind: 'process'; readonly executable: string; readonly args: readonly string[]; readonly cwd: string }
+	| { readonly kind: 'problem'; readonly outcome: 'no_emulator' | 'unavailable' }
+
+export type ProcessPlan = Extract<LaunchPlan, { kind: 'process' }>

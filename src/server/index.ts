@@ -38,6 +38,9 @@ import { createUrlOpener } from './os/open-url.ts'
 import { ActivityService } from './activity/activity-service.ts'
 import { SqliteActivityRepository } from './database/repositories/activity-repository.ts'
 import { createProcessLister } from './os/process-list.ts'
+import { SqliteEmulatorRepository } from './database/repositories/emulator-repository.ts'
+import { EmulatorService } from './emulators/emulator-service.ts'
+import { startProcess } from './os/start-process.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -72,20 +75,21 @@ function main(): void {
 	const games = new SqliteGameRepository(database)
 	const folders = new FolderService(new SqliteFolderRepository(database), { caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
 	const collections = new CollectionService(new SqliteCollectionRepository(database))
+	const emulators = new EmulatorService(new SqliteEmulatorRepository(database), { platform: process.platform })
 	const adapters = [
 		createSteamAdapter({ platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }),
 		createEpicAdapter({ platform: process.platform, env: Bun.env, manifestsOverride: config.epicManifestsPath }),
-		createFolderAdapter({ listFolders: () => folders.list() }),
+		createFolderAdapter({ listFolders: () => folders.list(), emulatorFor: (platform) => emulators.get(platform) }),
 	]
 	const integrations = new IntegrationService({ adapters, repository: new SqliteDiscoveryRepository(database, games), logger: logger.child('integrations') })
 	pairing.start()
 	integrations.scanReady()
 	const library = new LibraryService(games)
-	const launcher = new LaunchService({ library: library, adapters, opener: createUrlOpener(process.platform), logger: logger.child('launcher') })
-	const artwork = new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media'))
 	const activity = new ActivityService({ repository: new SqliteActivityRepository(database), listProcesses: createProcessLister(process.platform), logger: logger.child('activity'), caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
 	activity.start()
-	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, activity, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
+	const launcher = new LaunchService({ library, adapters, opener: createUrlOpener(process.platform), starter: startProcess, activity, platform: process.platform, logger: logger.child('launcher') })
+	const artwork = new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media'))
+	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, activity, emulators, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
 	logger.info(`${appName} runtime listening`, { url: server.url.href })
 	let stopping = false
 	const shutdown = async (): Promise<void> => {

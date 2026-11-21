@@ -92,3 +92,12 @@ The runtime trusts code running as the current operating-system user, since that
 | Exposing process details | Only executable paths are compared in memory. Arguments are not stored or logged. |
 | Command injection | The PowerShell script is fixed text, and other commands take no input. No shell is used. |
 | Resource use | One check runs at a time, with a 10 second timeout, and nothing runs when there are no installed games with a known folder. |
+
+## Emulators
+
+| Threat | Mitigation |
+| --- | --- |
+| Running arbitrary programs | Only a program you choose, on a platform you configured, is started, and only for games Cairn found. Windows accepts `.exe` files only, and script and batch extensions are refused. |
+| Argument injection through file names | The game's path is substituted into one argument. No shell is used. Templates are limited to spaces, `{game}` and no other braces. |
+| Escaping the game folder | A game's relative path may not contain empty, `.` or `..` parts, and its file type must match the platform. |
+| Changing settings from the web | Emulator settings are form actions behind the same pairing, host and origin checks as every other action. |

@@ -62,7 +62,7 @@ export default function LibraryPage(props: PageProps<ParamsOf<'/library'>, Loade
 					) : (
 						<ul class="game-grid">
 							{view.games.map((game) => (
-								<GameCard id={game.id} name={game.name} platform={game.platform} favorite={game.favorite} coverUrl={game.coverUrl} heroUrl={game.heroUrl} canLaunch={game.canLaunch} />
+								<GameCard id={game.id} name={game.name} platform={game.platform} favorite={game.favorite} coverUrl={game.coverUrl} heroUrl={game.heroUrl} canLaunch={game.canLaunch} installed={game.installed} detail={game.detail} />
 							))}
 						</ul>
 					)}

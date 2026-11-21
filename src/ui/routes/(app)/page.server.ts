@@ -12,6 +12,8 @@ export type HomeGame = {
 	readonly coverUrl: string | null
 	readonly heroUrl: string | null
 	readonly canLaunch: boolean
+	readonly installed: boolean
+	readonly detail: string
 	readonly blurb: string
 	readonly live: boolean
 }
@@ -67,6 +69,8 @@ export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }
 		coverUrl: urls.get(game.id)?.cover ?? null,
 		heroUrl: urls.get(game.id)?.hero ?? null,
 		canLaunch: launcher.canLaunch(game.source) && game.installState === 'installed',
+		installed: game.installState === 'installed',
+		detail: game.playtimeSeconds === 0 ? 'Not played yet' : `${formatPlaytime(game.playtimeSeconds)} played`,
 		blurb: game.lastPlayedAt === null ? 'Not played yet' : `Last played ${formatDate(game.lastPlayedAt)} · ${formatPlaytime(game.playtimeSeconds)} played`,
 		live: activity.activeSince(game.id) !== null
 	})
