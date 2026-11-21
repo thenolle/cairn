@@ -40,27 +40,30 @@ function Integration(props: { readonly integration: IntegrationSummary }): Child
 					{scan.warnings.length === 0 ? null : (<ul class="muted">{scan.warnings.map((warning) => (<li>{warning}</li>))}</ul>)}
 				</div>
 			)}
-			<table class="capabilities">
-				<thead>
-					<tr>
-						<th scope="col">Capability</th>
-						<th scope="col">Status</th>
-						<th scope="col">Note</th>
-					</tr>
-				</thead>
-				<tbody>
-					{capabilities.map((capability) => {
-						const row = describe(integration.capabilities[capability])
-						return (
-							<tr>
-								<th scope="row">{capabilityLabels[capability]}</th>
-								<td>{row.text}</td>
-								<td class="muted">{row.note}</td>
-							</tr>
-						)
-					})}
-				</tbody>
-			</table>
+			<details class="capability-details">
+				<summary>What Cairn can do with {integration.name}</summary>
+				<table class="capabilities">
+					<thead>
+						<tr>
+							<th scope="col">Capability</th>
+							<th scope="col">Status</th>
+							<th scope="col">Note</th>
+						</tr>
+					</thead>
+					<tbody>
+						{capabilities.map((capability) => {
+							const row = describe(integration.capabilities[capability])
+							return (
+								<tr>
+									<th scope="row">{capabilityLabels[capability]}</th>
+									<td>{row.text}</td>
+									<td class="muted">{row.note}</td>
+								</tr>
+							)
+						})}
+					</tbody>
+				</table>
+			</details>
 		</section>
 	)
 }

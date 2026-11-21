@@ -1,136 +1,134 @@
-import { maxArtworkBytes } from '../../shared/artwork.ts'
+import { artworkKinds } from '../../shared/artwork.ts'
+import type { ArtworkKind } from '../../shared/artwork.ts'
 import type { BulkStop, BulkSummary, MetadataOutcome, MetadataStatus } from '../../shared/metadata.ts'
-import { normalizeName } from '../../shared/library.ts'
-import type { Game } from '../../shared/library.ts'
+import type { SqliteAttemptRepository } from '../database/repositories/attempt-repository.ts'
 import type { ArtworkService } from '../library/artwork-service.ts'
 import type { LibraryService } from '../library/library-service.ts'
 import type { Logger } from '../logging/logger.ts'
-import { downloadImage } from './image-download.ts'
+import type { ArtworkProvider } from './provider.ts'
 import { ProviderError } from './steamgriddb-client.ts'
-import type { Fetcher, SgdbImage, SteamGridDbClient } from './steamgriddb-client.ts'
 
 export interface MetadataServiceOptions {
-	readonly client: SteamGridDbClient | null
+	readonly providers: readonly ArtworkProvider[]
 	readonly library: LibraryService
 	readonly artwork: ArtworkService
+	readonly attempts: Pick<SqliteAttemptRepository, 'record' | 'recent'>
 	readonly logger: Logger
-	readonly fetcher?: Fetcher
 	readonly now?: () => number
 }
 
-type Kind = 'cover' | 'hero'
+export type BulkMode = 'manual' | 'automatic'
 
-const allowedMimes: ReadonlySet<string> = new Set(['image/png', 'image/jpeg', 'image/webp'])
 const maxPerRun = 40
-const attemptsPerKind = 2
+const attemptsPerKind = 3
+const retryAfterMs: Readonly<Record<BulkMode, number>> = { manual: 3_600_000, automatic: 7 * 86_400_000 }
 
-function candidates(images: readonly SgdbImage[], kind: Kind): SgdbImage[] {
-	return images.filter((image) => {
-		if (!allowedMimes.has(image.mime) || image.nsfw || image.humor || image.epilepsy || image.width <= 0 || image.height <= 0) return false
-		const ratio = image.height / image.width
-		return kind === 'cover' ? ratio >= 1.2 && ratio <= 1.8 : 1 / ratio >= 2
-	}).sort((a, b) => b.score - a.score).slice(0, attemptsPerKind)
-}
-
-/** Fills in missing artwork from SteamGridDB. Artwork you set yourself is never replaced. */
+/** Fills in missing artwork from every available source, in order. Artwork you set yourself is never replaced. */
 export class MetadataService {
-	private readonly client: SteamGridDbClient | null
+	private readonly providers: readonly ArtworkProvider[]
 	private readonly library: LibraryService
 	private readonly artwork: ArtworkService
+	private readonly attempts: Pick<SqliteAttemptRepository, 'record' | 'recent'>
 	private readonly logger: Logger
-	private readonly fetcher: Fetcher
 	private readonly now: () => number
 	private running = false
 	private last: BulkSummary | null = null
 
 	constructor(options: MetadataServiceOptions) {
-		this.client = options.client
+		this.providers = options.providers
 		this.library = options.library
 		this.artwork = options.artwork
+		this.attempts = options.attempts
 		this.logger = options.logger
-		this.fetcher = options.fetcher ?? ((url, init) => fetch(url, init))
 		this.now = options.now ?? Date.now
 	}
 
 	available(): boolean {
-		return this.client !== null
+		return this.providers.some((provider) => provider.ready())
 	}
 
 	status(): MetadataStatus {
-		return { configured: this.client !== null, running: this.running, last: this.last }
+		return {
+			providers: this.providers.map((provider) => ({ id: provider.id, name: provider.name, ready: provider.ready(), hint: provider.hint })),
+			running: this.running,
+			last: this.last
+		}
 	}
 
 	async fetchFor(gameId: string): Promise<MetadataOutcome> {
 		const game = this.library.get(gameId)
 		if (game === undefined) return 'not_found'
-		const client = this.client
-		if (client === null) return 'unconfigured'
+		if (!this.available()) return 'unconfigured'
 		const existing = this.artwork.urlsOf(game.id)
-		const needCover = existing.cover === null
-		const needHero = existing.hero === null
-		if (!needCover && !needHero) return 'nothing_new'
-		try {
-			const providerId = await this.resolve(client, game)
-			if (providerId === null) return 'no_match'
-			let updated = false
-			if (needCover) updated = (await this.take(game.id, 'cover', await client.grids(providerId))) || updated
-			if (needHero) updated = (await this.take(game.id, 'hero', await client.heroes(providerId))) || updated
-			return updated ? 'updated' : 'nothing_new'
-		} catch (error) {
-			if (error instanceof ProviderError) {
-				if (error.kind === 'failed') this.logger.warn('Artwork lookup failed', { id: game.id, reason: error.message })
-				return error.kind
+		const missing = new Set<ArtworkKind>(artworkKinds.filter((kind) => existing[kind] === null))
+		if (missing.size === 0) return 'nothing_new'
+		this.attempts.record(game.id, this.now())
+		let added = 0
+		let anyOffer = false
+		let blocked: 'invalid_key' | 'rate_limited' | null = null
+		for (const provider of this.providers) {
+			if (missing.size === 0) break
+			if (!provider.ready()) continue
+			let offers
+			try {
+				offers = await provider.find(game, missing)
+			} catch (error) {
+				if (error instanceof ProviderError && (error.kind === 'invalid_key' || error.kind === 'rate_limited')) blocked = error.kind
+				else this.logger.warn('Artwork source failed', { source: provider.id, id: game.id, error: error instanceof Error ? error.message : 'unknown' })
+				continue
 			}
-			this.logger.error('Artwork lookup failed', { id: game.id, error })
-			return 'failed'
+			if (offers.length > 0) anyOffer = true
+			for (const kind of [...missing]) {
+				const ranked = offers.filter((offer) => offer.kind === kind).sort((a, b) => b.score - a.score).slice(0, attemptsPerKind)
+				for (const offer of ranked) {
+					let bytes: Uint8Array | null = null
+					try {
+						bytes = await offer.load()
+					} catch {
+						bytes = null
+					}
+					if (bytes === null) continue
+					const saved = await this.artwork.save(game.id, kind, bytes)
+					if (saved.ok) {
+						missing.delete(kind)
+						added += 1
+						this.logger.info('Artwork added', { source: provider.id, id: game.id, kind })
+						break
+					}
+				}
+			}
 		}
+		if (added > 0) return 'updated'
+		if (blocked !== null && !anyOffer) return blocked
+		return anyOffer ? 'nothing_new' : 'no_match'
 	}
 
-	/** Starts a background run over games that lack artwork. Returns false when one is already running or no key is set. */
-	startBulk(): boolean {
-		if (this.client === null || this.running) return false
+	/** Starts a background run over games that lack artwork. Returns false when one is already running or nothing is available. */
+	startBulk(mode: BulkMode): boolean {
+		if (this.running || !this.available()) return false
 		this.running = true
-		void this.runBulk().finally(() => {
+		void this.runBulk(mode).finally(() => {
 			this.running = false
 		})
 		return true
 	}
 
-	private async resolve(client: SteamGridDbClient, game: Game): Promise<number | null> {
-		if (game.source === 'steam' && game.sourceId !== null) {
-			const found = await client.gameBySteamId(game.sourceId)
-			if (found !== null) return found.id
-		}
-		const wanted = normalizeName(game.name)
-		const results = await client.search(game.name)
-		const exact = results.find((result) => normalizeName(result.name) === wanted)
-		if (exact !== undefined) return exact.id
-		const prefixed = results.filter((result) => normalizeName(result.name).startsWith(wanted))
-		return prefixed.length === 1 ? (prefixed[0]?.id ?? null) : null
-	}
-
-	private async take(gameId: string, kind: Kind, images: readonly SgdbImage[]): Promise<boolean> {
-		for (const image of candidates(images, kind)) {
-			const bytes = await downloadImage(image.url, maxArtworkBytes, this.fetcher)
-			if (bytes === null) continue
-			const saved = await this.artwork.save(gameId, kind, bytes)
-			if (saved.ok) return true
-		}
-		return false
-	}
-
-	private async runBulk(): Promise<void> {
+	private async runBulk(mode: BulkMode): Promise<void> {
 		let checked = 0
 		let updated = 0
 		let failed = 0
 		let stopped: BulkStop | null = null
 		let cursor: string | null = null
+		const since = this.now() - retryAfterMs[mode]
 		outer: do {
 			const page = this.library.list({ text: '', platform: null, favoritesOnly: false, sort: 'added', cursor, limit: 100 })
-			const art = this.artwork.urlsFor(page.games.map((game) => game.id))
+			const ids = page.games.map((game) => game.id)
+			const art = this.artwork.urlsFor(ids)
+			const tried = this.attempts.recent(ids, since)
 			for (const game of page.games) {
 				const entry = art.get(game.id)
-				if ((entry?.cover ?? null) !== null && (entry?.hero ?? null) !== null) continue
+				const complete = (entry?.cover ?? null) !== null && (entry?.hero ?? null) !== null && (entry?.logo ?? null) !== null
+				if (complete || tried.has(game.id)) continue
 				if (checked >= maxPerRun) {
 					stopped = 'limit'
 					break outer
@@ -146,7 +144,9 @@ export class MetadataService {
 			}
 			cursor = page.nextCursor
 		} while (cursor !== null)
-		this.last = { at: this.now(), checked, updated, failed, stopped }
-		this.logger.info('Artwork run finished', { checked, updated, failed, stopped })
+		if (checked > 0 || mode === 'manual') {
+			this.last = { at: this.now(), checked, updated, failed, stopped }
+			this.logger.info('Artwork run finished', { mode, checked, updated, failed, stopped })
+		}
 	}
 }

@@ -111,3 +111,13 @@ The runtime trusts code running as the current operating-system user, since that
 | Oversized or disguised downloads | Downloads stop at the artwork size limit, and the content is validated by its bytes before it is stored. |
 | Hammering the provider | One request at a time with pauses, a cap per run, and a stop on rate limiting. Runs only start when you ask. |
 | Overwriting your artwork | Only missing covers and banners are filled. |
+
+## Artwork sources
+
+| Threat | Mitigation |
+| --- | --- |
+| Reading unintended local files | The local source only reads the image cache folder of the game's own Steam app id, which must be digits, and skips files over the size limit. |
+| Fetching from unintended hosts | Each source has its own host list. Links must be HTTPS without credentials, and every redirect is checked the same way. |
+| Leaking credentials | Keys are read from the environment, sent only to their own service and never stored, logged or shown. |
+| Hammering a source | One request at a time with pauses, a cap per run, a memory of recent attempts and a stop on rate limiting. |
+| Disguised or oversized images | Downloads stop at the size limit and the content is validated by its bytes before it is stored. |

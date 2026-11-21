@@ -9,6 +9,7 @@ export interface HeroGame {
 	readonly name: string
 	readonly platform: string
 	readonly heroUrl: string | null
+	readonly logoUrl: string | null
 	readonly canLaunch: boolean
 	readonly blurb: string
 	readonly live: boolean
@@ -25,7 +26,7 @@ export function Hero(props: HeroProps): Child {
 			{game.heroUrl === null ? null : <img class="hero-art" src={game.heroUrl} alt="" decoding="async" />}
 			<div class="hero-body">
 				<p class="hero-meta"><LiveBadge gameId={game.id} live={game.live} /></p>
-				<h1>{game.name}</h1>
+				{game.logoUrl === null ? (<h1>{game.name}</h1>) : (<h1 class="hero-title-logo"><img class="hero-logo" src={game.logoUrl} alt={game.name} decoding="async" /></h1>)}
 				<p class="hero-blurb">{game.blurb}</p>
 				<div class="hero-actions">
 					{game.canLaunch ? (

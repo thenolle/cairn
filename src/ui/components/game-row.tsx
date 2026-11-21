@@ -23,7 +23,23 @@ export function GameRow(props: GameRowProps): Child {
 			</div>
 			<div class="row-viewport">
 				<button class="row-arrow row-arrow-previous" type="button" data-row-previous aria-controls={listId} aria-label={`Scroll ${props.title} back`}><ChevronLeftIcon size={28} /></button>
-				<ul class="row-list" id={listId} data-row-list>{props.games.map((game, index) => (<GameCard id={game.id} name={game.name} platform={game.platform} favorite={game.favorite} coverUrl={game.coverUrl} heroUrl={game.heroUrl} canLaunch={game.canLaunch} installed={game.installed} detail={game.detail} rank={props.ranked ? index + 1 : undefined} />))}</ul>
+				<ul class="row-list" id={listId} data-row-list>
+					{props.games.map((game, index) => (
+						<GameCard
+							id={game.id}
+							name={game.name}
+							platform={game.platform}
+							favorite={game.favorite}
+							coverUrl={game.coverUrl}
+							heroUrl={game.heroUrl}
+							logoUrl={game.logoUrl}
+							canLaunch={game.canLaunch}
+							installed={game.installed}
+							detail={game.detail}
+							rank={props.ranked ? index + 1 : undefined}
+						/>
+					))}
+				</ul>
 				<button class="row-arrow row-arrow-next" type="button" data-row-next aria-controls={listId} aria-label={`Scroll ${props.title} forward`}><ChevronRightIcon size={28} /></button>
 			</div>
 		</section>

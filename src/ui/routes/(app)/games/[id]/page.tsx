@@ -10,16 +10,23 @@ import type { loader } from './page.server.ts'
 
 export default function GamePage(props: PageProps<ParamsOf<'/games/[id]'>, LoaderData<typeof loader>>): Child {
 	const game = props.data
-	const favoriteLabel = game.favorite ? 'Remove from favorites' : 'Add to favorites'
+	const favoriteLabel = game.favorite ? 'Remove from My List' : 'Add to My List'
 	return (
 		<div class="game-page" data-game-page={game.id}>
 			<a class="modal-close" href="/library" aria-label="Close">×</a>
 			<section class={`hero ${hueClass(game.name)}`} aria-label={game.name}>
 				{game.heroUrl === null ? null : <img class="hero-art" src={game.heroUrl} alt="" decoding="async" />}
 				<div class="hero-body">
-					<h1>{game.name}</h1>
+					{game.logoUrl === null ? (<h1>{game.name}</h1>) : (<h1 class="hero-title-logo"><img class="hero-logo" src={game.logoUrl} alt={game.name} decoding="async" /></h1>)}
 					<div class="hero-actions">
-						{game.canLaunch ? (<form method="post" action={`/actions/games/${game.id}/launch`}><button class="button button-primary button-play" type="submit"><PlayIcon size={26} /> <span>Play</span></button></form>) : null}
+						{game.canLaunch ? (
+							<form method="post" action={`/actions/games/${game.id}/launch`}>
+								<button class="button button-primary button-play" type="submit">
+									<PlayIcon size={26} />
+									<span>Play</span>
+								</button>
+							</form>
+						) : null}
 						<form method="post" action={`/actions/games/${game.id}/favorite`}>
 							<input type="hidden" name="favorite" value={game.favorite ? '0' : '1'} />
 							<button class="round round-lg" type="submit" aria-label={favoriteLabel} title={favoriteLabel}>{game.favorite ? <Check size={22} /> : <Plus size={22} />}</button>
@@ -61,22 +68,39 @@ export default function GamePage(props: PageProps<ParamsOf<'/games/[id]'>, Loade
 					)}
 					<section class="collections-panel" aria-labelledby="collections-title">
 						<h2 id="collections-title">Collections</h2>
-						{game.collections.length === 0 ? (<p class="muted">This game is not in any collection.</p>) : (<ul class="chip-list">{game.collections.map((collection) => (<li><form method="post" action={`/actions/games/${game.id}/collections/${collection.id}/remove`}><button class="chip" type="submit" aria-label={`Remove from ${collection.name}`}>{collection.name}<span aria-hidden="true"> ×</span></button></form></li>))}</ul>)}
-						{game.otherCollections.length === 0 ? (<p class="muted"><a href="/collections">Manage collections</a></p>) : (<form class="folder-form" method="post" action={`/actions/games/${game.id}/collections`}>
-							<label class="field">
-								<span class="field-label">Add to a collection</span>
-								<select name="collection">{game.otherCollections.map((collection) => (<option value={collection.id}>{collection.name}</option>))}</select>
-							</label>
-							<button class="button button-secondary" type="submit">Add</button>
-						</form>)}
+						{game.collections.length === 0 ? (<p class="muted">This game is not in any collection.</p>) : (
+							<ul class="chip-list">
+								{game.collections.map((collection) => (
+									<li>
+										<form method="post" action={`/actions/games/${game.id}/collections/${collection.id}/remove`}>
+											<button class="chip" type="submit" aria-label={`Remove from ${collection.name}`}>
+												{collection.name}
+												<span aria-hidden="true"> ×</span>
+											</button>
+										</form>
+									</li>
+								))}
+							</ul>
+						)}
+						{game.otherCollections.length === 0 ? (<p class="muted"><a href="/collections">Manage collections</a></p>) : (
+							<form class="folder-form" method="post" action={`/actions/games/${game.id}/collections`}>
+								<label class="field">
+									<span class="field-label">Add to a collection</span>
+									<select name="collection">{game.otherCollections.map((collection) => (<option value={collection.id}>{collection.name}</option>))}</select>
+								</label>
+								<button class="button button-secondary" type="submit">Add</button>
+							</form>
+						)}
 					</section>
 				</div>
 				<div class="detail-side">
+					{game.coverUrl === null ? null : <img class="detail-cover" src={game.coverUrl} alt={`Cover of ${game.name}`} loading="lazy" decoding="async" />}
+					{game.iconUrl === null ? null : <img class="detail-icon" src={game.iconUrl} alt="" loading="lazy" decoding="async" />}
 					<p><span class="dim">Platform:</span> {game.platform}</p>
 					<p><span class="dim">Source:</span> {game.source}</p>
-					<p><a href={`/games/${game.id}/artwork`}>Edit artwork</a></p>
-					{game.metadataAvailable ? (<form method="post" action={`/actions/games/${game.id}/metadata`}><button class="button button-secondary" type="submit">Find missing artwork</button></form>) : null}
+					<p><a href={`/games/${game.id}/artwork`}>Manage artwork</a></p>
 					<p><a href={`/games/${game.id}/edit`}>Edit details</a></p>
+					{game.metadataAvailable ? (<form method="post" action={`/actions/games/${game.id}/metadata`}><button class="button button-secondary" type="submit">Find missing artwork</button></form>) : null}
 				</div>
 			</div>
 			{game.similar.length === 0 ? null : (
@@ -86,7 +110,7 @@ export default function GamePage(props: PageProps<ParamsOf<'/games/[id]'>, Loade
 						{game.similar.map((peer) => (
 							<li class="more-card">
 								<a href={`/games/${peer.id}`}>
-									<GameThumb name={peer.name} coverUrl={peer.coverUrl} heroUrl={peer.heroUrl} portrait={false} />
+									<GameThumb name={peer.name} coverUrl={peer.coverUrl} heroUrl={peer.heroUrl} logoUrl={peer.logoUrl} portrait={false} />
 									<span class="more-title">{peer.name}</span>
 									<span class="more-meta">{peer.platform}</span>
 								</a>

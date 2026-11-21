@@ -1,6 +1,6 @@
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
-import { artworkUrl, maxArtworkBytes } from '../../shared/artwork.ts'
+import { artworkUrl, emptyArtwork, maxArtworkBytes } from '../../shared/artwork.ts'
 import type { ArtworkKind, ArtworkUrls } from '../../shared/artwork.ts'
 import type { ArtworkRepository } from '../database/repositories/artwork-repository.ts'
 import { sniffImageType } from './image-type.ts'
@@ -79,9 +79,9 @@ export class ArtworkService {
 	}
 
 	urlsFor(gameIds: readonly string[]): ReadonlyMap<string, ArtworkUrls> {
-		const grouped = new Map<string, { cover: string | null; hero: string | null }>()
+		const grouped = new Map<string, { cover: string | null; hero: string | null; logo: string | null; icon: string | null }>()
 		for (const record of this.repository.listForGames([...new Set(gameIds)].slice(0, 100))) {
-			const entry = grouped.get(record.gameId) ?? { cover: null, hero: null }
+			const entry = grouped.get(record.gameId) ?? { ...emptyArtwork }
 			entry[record.kind] = artworkUrl(record.gameId, record.kind, record.updatedAt)
 			grouped.set(record.gameId, entry)
 		}
@@ -89,6 +89,6 @@ export class ArtworkService {
 	}
 
 	urlsOf(gameId: string): ArtworkUrls {
-		return this.urlsFor([gameId]).get(gameId) ?? { cover: null, hero: null }
+		return this.urlsFor([gameId]).get(gameId) ?? { ...emptyArtwork }
 	}
 }

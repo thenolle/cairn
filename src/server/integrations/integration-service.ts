@@ -8,6 +8,7 @@ export interface IntegrationServiceOptions {
 	readonly repository: SqliteDiscoveryRepository
 	readonly logger: Logger
 	readonly now?: () => number
+	readonly afterScan?: (summary: ScanSummary) => void
 }
 
 /** Runs adapters, applies their discoveries to the library and remembers the latest result of each. */
@@ -16,6 +17,7 @@ export class IntegrationService {
 	private readonly repository: SqliteDiscoveryRepository
 	private readonly logger: Logger
 	private readonly now: () => number
+	private readonly afterScan: ((summary: ScanSummary) => void) | undefined
 	private readonly lastScans = new Map<string, ScanSummary>()
 	private readonly running = new Set<string>()
 
@@ -24,6 +26,7 @@ export class IntegrationService {
 		this.repository = options.repository
 		this.logger = options.logger
 		this.now = options.now ?? Date.now
+		this.afterScan = options.afterScan
 	}
 
 	private async detect(adapter: PlatformAdapter): Promise<Detection> {
@@ -60,6 +63,7 @@ export class IntegrationService {
 		try {
 			const summary = await this.runScan(adapter)
 			this.lastScans.set(adapterId, summary)
+			if (summary.ok && summary.added > 0) this.afterScan?.(summary)
 			return summary
 		} finally {
 			this.running.delete(adapterId)

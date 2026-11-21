@@ -115,4 +115,14 @@ export class SteamGridDbClient {
 		if (!Number.isSafeInteger(gameId) || gameId <= 0) return []
 		return parseImages(dataOf(await this.request(`/heroes/game/${gameId}?nsfw=false&humor=false&epilepsy=false`)))
 	}
+
+	async logos(gameId: number): Promise<readonly SgdbImage[]> {
+		if (!Number.isSafeInteger(gameId) || gameId <= 0) return []
+		return parseImages(dataOf(await this.request(`/logos/game/${gameId}?nsfw=false&humor=false&epilepsy=false`)))
+	}
+
+	async icons(gameId: number): Promise<readonly SgdbImage[]> {
+		if (!Number.isSafeInteger(gameId) || gameId <= 0) return []
+		return parseImages(dataOf(await this.request(`/icons/game/${gameId}?nsfw=false&humor=false&epilepsy=false`)))
+	}
 }

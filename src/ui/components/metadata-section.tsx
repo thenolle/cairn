@@ -15,16 +15,29 @@ export function MetadataSection(props: MetadataSectionProps): Child {
 		<section class="adapter" id="metadata" aria-labelledby="metadata-title">
 			<h2 id="metadata-title">Artwork</h2>
 			<p class="muted">
-				Cairn can fetch covers and banners from <a href="https://www.steamgriddb.com">SteamGridDB</a> for games that have none. Artwork you set
-				yourself is never replaced. SteamGridDB allows personal, non-commercial use and is not affiliated with Valve.
+				Cairn looks for covers, banners, logos and icons for games that lack them, trying each source in order. Pictures you set yourself are never
+				replaced. New games are searched automatically in the background.
 			</p>
-			{status.configured ? (<form method="post" action="/actions/metadata/fill"><button class="button button-primary" type="submit" disabled={status.running}>{status.running ? 'Fetching…' : 'Fetch missing artwork'}</button></form>) : (<p class="notice">Create a free key in your SteamGridDB account preferences, set <code>CAIRN_STEAMGRIDDB_KEY</code> and restart Cairn.</p>)}
+			<ul class="provider-list">
+				{status.providers.map((provider) => (
+					<li>
+						<span>{provider.name}</span>
+						<span class={provider.ready ? 'status-pill status-ready' : 'status-pill'}>{provider.ready ? 'Ready' : 'Not set up'}</span>
+						{provider.ready ? null : <span class="provider-hint">{provider.hint}</span>}
+					</li>
+				))}
+			</ul>
+			<form method="post" action="/actions/metadata/fill"><button class="button button-primary" type="submit" disabled={status.running}>{status.running ? 'Fetching…' : 'Fetch missing artwork'}</button></form>
 			{last === null ? null : (
 				<div class="scan-result" role="status">
 					<p>{formatTimestamp(new Date(last.at).toISOString())}: {last.checked} checked, {last.updated} updated, {last.failed} failed.</p>
 					{last.stopped === null ? null : <p class="muted">{bulkStopMessages[last.stopped]}</p>}
 				</div>
 			)}
+			<p class="muted">
+				Sources: your Steam image cache and Steam's public images, <a href="https://www.steamgriddb.com">SteamGridDB</a> and{' '}
+				<a href="https://www.igdb.com">IGDB</a>. SteamGridDB and IGDB allow personal, non-commercial use.
+			</p>
 		</section>
 	)
 }

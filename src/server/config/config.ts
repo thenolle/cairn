@@ -21,6 +21,8 @@ export interface Config {
 	readonly steamPath: string | null
 	readonly epicManifestsPath: string | null
 	readonly steamGridDbKey: string | null
+	readonly igdbClientId: string | null
+	readonly igdbClientSecret: string | null
 }
 
 export interface ConfigSource {
@@ -88,5 +90,7 @@ export function loadConfig(source: ConfigSource = {}): Config {
 		steamPath: parseAbsolutePath('CAIRN_STEAM_PATH', env['CAIRN_STEAM_PATH']),
 		epicManifestsPath: parseAbsolutePath('CAIRN_EPIC_MANIFESTS', env['CAIRN_EPIC_MANIFESTS']),
 		steamGridDbKey: parseApiKey('CAIRN_STEAMGRIDDB_KEY', env['CAIRN_STEAMGRIDDB_KEY']),
+		igdbClientId: parseApiKey('CAIRN_IGDB_CLIENT_ID', env['CAIRN_IGDB_CLIENT_ID']),
+		igdbClientSecret: parseApiKey('CAIRN_IGDB_CLIENT_SECRET', env['CAIRN_IGDB_CLIENT_SECRET']),
 	}
 }

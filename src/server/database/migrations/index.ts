@@ -6,6 +6,7 @@ import { libraryFoldersMigration } from './0004-library-folders.ts'
 import { collectionsMigration } from './0005-collections.ts'
 import { activityMigration } from './0006-activity.ts'
 import { emulatorsMigration } from './0007-emulators.ts'
+import { artworkKindsMigration } from './0008-artwork-kinds.ts'
 
 export const migrations: readonly Migration[] = [
 	sessionsMigration,
@@ -14,5 +15,6 @@ export const migrations: readonly Migration[] = [
 	libraryFoldersMigration,
 	collectionsMigration,
 	activityMigration,
-	emulatorsMigration
+	emulatorsMigration,
+	artworkKindsMigration
 ]
