@@ -31,3 +31,12 @@ Games without artwork show a tinted tile with their initials. Images are stored 
 ## Home
 
 Home features a game and lists your favorites and the games you added most recently. The featured game is the first favorite or recent game that has a banner, or the first favorite if none has one.
+
+## Collections
+
+A collection is a named group of games that you manage yourself. Create one on the **Collections** page, then add games from a game's page. A game can belong to several collections.
+
+- Collection names are unique, ignoring capitals and accents, and can be up to 60 characters.
+- Choose a collection's name to see its games in the library. You can also filter the library by collection and combine that with search, platform and favorites.
+- Collections that contain games appear as rows on Home.
+- Deleting a collection, or removing a game from one, never removes the game. Removing a game from the library removes it from its collections.

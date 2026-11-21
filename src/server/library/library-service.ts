@@ -82,7 +82,7 @@ export class LibraryService {
 	list(query: GameQuery): GamePage {
 		const limit = Math.min(Math.max(query.limit ?? defaultPageSize, 1), maxPageSize)
 		const result = this.repository.list({
-			filter: { text: query.text, platform: query.platform, favoritesOnly: query.favoritesOnly },
+			filter: { text: query.text, platform: query.platform, favoritesOnly: query.favoritesOnly, collectionId: query.collectionId ?? null },
 			sort: query.sort,
 			after: decodeCursor(query.cursor, query.sort),
 			limit
@@ -96,5 +96,5 @@ export class LibraryService {
 }
 
 export function isGameId(value: string): boolean {
-return idPattern.test(value)
+	return idPattern.test(value)
 }

@@ -31,6 +31,8 @@ import { createEpicAdapter } from './integrations/epic/epic-adapter.ts'
 import { SqliteFolderRepository } from './database/repositories/folder-repository.ts'
 import { createFolderAdapter } from './integrations/folders/folder-adapter.ts'
 import { FolderService } from './library/folder-service.ts'
+import { SqliteCollectionRepository } from './database/repositories/collection-repository.ts'
+import { CollectionService } from './library/collection-service.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -76,6 +78,7 @@ function main(): void {
 
 	const games = new SqliteGameRepository(database)
 	const folders = new FolderService(new SqliteFolderRepository(database), { caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
+	const collections = new CollectionService(new SqliteCollectionRepository(database))
 	const integrations = new IntegrationService({
 		adapters: [
 			createSteamAdapter({ platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }),
@@ -98,6 +101,7 @@ function main(): void {
 			library: new LibraryService(games),
 			integrations,
 			folders,
+			collections,
 			artwork: new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media')),
 			clientDirectory: config.clientDirectory,
 			development: config.development
