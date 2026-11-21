@@ -20,6 +20,8 @@ import { PairingService } from './security/pairing.ts'
 import { SessionService } from './security/sessions.ts'
 import { SqliteGameRepository } from './database/repositories/game-repository.ts'
 import { LibraryService } from './library/library-service.ts'
+import { SqliteArtworkRepository } from './database/repositories/artwork-repository.ts'
+import { ArtworkService } from './library/artwork-service.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -72,6 +74,7 @@ function main(): void {
 			logger,
 			runtime,
 			library: new LibraryService(new SqliteGameRepository(database)),
+			artwork: new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media')),
 			clientDirectory: config.clientDirectory,
 			development: config.development
 		}),

@@ -1,58 +1,43 @@
 import type { Loader, ParamsOf } from '@gambrel/router'
-import { isPlatformKey, platformLabel } from '../../../shared/library.ts'
-import type { GameFilter, GameSort } from '../../../shared/library.ts'
+import type { Game } from '../../../shared/library.ts'
+import { platformLabel } from '../../../shared/library.ts'
 import type { PageContext } from '../../context.server.ts'
 
-export type GameCard = {
+export type HomeGame = {
 	readonly id: string
 	readonly name: string
 	readonly platform: string
 	readonly favorite: boolean
+	readonly coverUrl: string | null
+	readonly heroUrl: string | null
 }
 
-export type LibraryView = {
-	readonly games: readonly GameCard[]
-	readonly total: number
-	readonly isEmpty: boolean
-	readonly filters: {
-		readonly text: string
-		readonly platform: string
-		readonly favoritesOnly: boolean
-		readonly sort: GameSort
-	}
-	readonly nextHref: string | null
+export type HomeView = {
+	readonly featured: HomeGame | null
+	readonly favorites: readonly HomeGame[]
+	readonly recent: readonly HomeGame[]
 }
 
-export const loader: Loader<ParamsOf<'/'>, LibraryView, PageContext> = ({ search, context }) => {
-	const params = new URLSearchParams(search)
-	const sort: GameSort = params.get('sort') === 'added' ? 'added' : 'name'
-	const platform = params.get('platform')
-	const filter: GameFilter = {
-		text: (params.get('q') ?? '').slice(0, 100),
-		platform: platform !== null && isPlatformKey(platform) ? platform : null,
-		favoritesOnly: params.get('favorites') === '1'
-	}
+const base = { text: '', platform: null, cursor: null, limit: 12 } as const
 
-	const page = context.library.list({ ...filter, sort, cursor: params.get('after') })
-	const total = context.library.count(filter)
-	const filtered = filter.text !== '' || filter.platform !== null || filter.favoritesOnly
+export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }) => {
+	const { library, artwork } = context
+	const favorites = library.list({ ...base, favoritesOnly: true, sort: 'name' }).games
+	const recent = library.list({ ...base, favoritesOnly: false, sort: 'added' }).games
+	const urls = artwork.urlsFor([...favorites, ...recent].map((game) => game.id))
 
-	let nextHref: string | null = null
-	if (page.nextCursor !== null) {
-		params.set('after', page.nextCursor)
-		nextHref = `/?${params.toString()}`
-	}
+	const toHome = (game: Game): HomeGame => ({
+		id: game.id,
+		name: game.name,
+		platform: platformLabel(game.platform),
+		favorite: game.favorite,
+		coverUrl: urls.get(game.id)?.cover ?? null,
+		heroUrl: urls.get(game.id)?.hero ?? null
+	})
 
-	return {
-		games: page.games.map((game) => ({
-			id: game.id,
-			name: game.name,
-			platform: platformLabel(game.platform),
-			favorite: game.favorite
-		})),
-		total,
-		isEmpty: total === 0 && !filtered,
-		filters: { text: filter.text, platform: filter.platform ?? '', favoritesOnly: filter.favoritesOnly, sort },
-		nextHref
-	}
+	const favoriteViews = favorites.map(toHome)
+	const recentViews = recent.map(toHome)
+	const featured =
+		[...favoriteViews, ...recentViews].find((game) => game.heroUrl !== null) ?? favoriteViews[0] ?? recentViews[0] ?? null
+	return { featured, favorites: favoriteViews, recent: recentViews }
 }

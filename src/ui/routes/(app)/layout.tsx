@@ -5,5 +5,9 @@ import { AppShell } from '../../components/app-shell.tsx'
 import type { loader } from './layout.server.ts'
 
 export default function ShellLayout(props: LayoutProps<RouteParams, LoaderData<typeof loader>>): Child {
-	return <AppShell pathname={props.data.pathname}>{props.children}</AppShell>
+	return (
+		<AppShell pathname={props.data.pathname} pinned={props.data.pinned}>
+			{props.children}
+		</AppShell>
+	)
 }
