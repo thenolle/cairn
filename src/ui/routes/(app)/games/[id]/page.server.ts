@@ -3,6 +3,7 @@ import type { Loader, ParamsOf } from '@gambrel/router'
 import { isLaunchOutcome, launchMessages } from '../../../../../shared/launch.ts'
 import { installStateLabel, platformLabel, sourceLabel } from '../../../../../shared/library.ts'
 import type { PageContext } from '../../../../context.server.ts'
+import { isMetadataOutcome, metadataMessages } from '../../../../../shared/metadata.ts'
 
 export type CollectionRef = {
 	readonly id: string
@@ -42,6 +43,7 @@ export type GameDetails = {
 	readonly collections: readonly CollectionRef[]
 	readonly otherCollections: readonly CollectionRef[]
 	readonly similar: readonly SimilarGame[]
+	readonly metadataAvailable: boolean
 }
 
 export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> = ({ params, search, context }) => {
@@ -51,6 +53,7 @@ export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> =
 	const member = context.collections.forGame(game.id)
 	const memberIds = new Set(member.map((collection) => collection.id))
 	const outcome = new URLSearchParams(search).get('launch')
+	const fetched = new URLSearchParams(search).get('metadata')
 	const peers = context.library.list({ text: '', platform: game.platform, favoritesOnly: false, sort: 'name', cursor: null, limit: 7 }).games.filter((peer) => peer.id !== game.id).slice(0, 6)
 	const peerArt = context.artwork.urlsFor(peers.map((peer) => peer.id))
 	return {
@@ -68,7 +71,8 @@ export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> =
 		heroUrl: art.hero,
 		canLaunch: context.launcher.canLaunch(game.source) && game.installState === 'installed',
 		activeSince: context.activity.activeSince(game.id),
-		notice: outcome !== null && isLaunchOutcome(outcome) ? { message: launchMessages[outcome], ok: outcome === 'started' } : null,
+		notice: outcome !== null && isLaunchOutcome(outcome) ? { message: launchMessages[outcome], ok: outcome === 'started' } : fetched !== null && isMetadataOutcome(fetched) ? { message: metadataMessages[fetched], ok: fetched === 'updated' } : null,
+		metadataAvailable: context.metadata.available(),
 		sessions: context.activity.recentSessions(game.id, 5).filter((session) => session.endedAt !== null).map((session) => ({ startedAt: session.startedAt, seconds: session.seconds })),
 		collections: member.map((collection) => ({ id: collection.id, name: collection.name })),
 		otherCollections: context.collections.list().filter((collection) => !memberIds.has(collection.id)).map((collection) => ({ id: collection.id, name: collection.name })),

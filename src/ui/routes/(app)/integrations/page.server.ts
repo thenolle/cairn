@@ -5,6 +5,7 @@ import { folderErrorMessages, isFolderError } from '../../../../shared/folders.t
 import type { LibraryFolder } from '../../../../shared/folders.ts'
 import type { IntegrationSummary } from '../../../../shared/integrations.ts'
 import type { PageContext } from '../../../context.server.ts'
+import type { MetadataStatus } from '../../../../shared/metadata.ts'
 
 export type IntegrationsView = {
 	readonly integrations: readonly IntegrationSummary[]
@@ -12,6 +13,7 @@ export type IntegrationsView = {
 	readonly folderError: string | null
 	readonly emulators: readonly EmulatorProfile[]
 	readonly emulatorError: string | null
+	readonly metadata: MetadataStatus
 }
 
 export const loader: Loader<ParamsOf<'/integrations'>, IntegrationsView, PageContext> = async ({ context, search }) => {
@@ -23,6 +25,7 @@ export const loader: Loader<ParamsOf<'/integrations'>, IntegrationsView, PageCon
 		folders: context.folders.list(),
 		folderError: folderCode !== null && isFolderError(folderCode) ? folderErrorMessages[folderCode] : null,
 		emulators: context.emulators.list(),
-		emulatorError: emulatorCode !== null && isEmulatorError(emulatorCode) ? emulatorErrorMessages[emulatorCode] : null
+		emulatorError: emulatorCode !== null && isEmulatorError(emulatorCode) ? emulatorErrorMessages[emulatorCode] : null,
+		metadata: context.metadata.status(),
 	}
 }
