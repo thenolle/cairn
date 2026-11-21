@@ -11,6 +11,7 @@ export interface GameCardProps {
 	readonly favorite: boolean
 	readonly coverUrl: string | null
 	readonly heroUrl: string | null
+	readonly logoUrl: string | null
 	readonly canLaunch: boolean
 	readonly installed: boolean
 	readonly detail: string
@@ -25,7 +26,7 @@ export function GameCard(props: GameCardProps): Child {
 			{props.rank === undefined ? null : (<span class="rank" aria-hidden="true">{props.rank}</span>)}
 			<div class="card-body">
 				<a class="game-link" href={`/games/${props.id}`}>
-					<GameThumb name={props.name} coverUrl={props.coverUrl} heroUrl={props.heroUrl} portrait={ranked} />
+					<GameThumb name={props.name} coverUrl={props.coverUrl} heroUrl={props.heroUrl} logoUrl={props.logoUrl} portrait={ranked} />
 					<span class="visually-hidden">{props.name}</span>
 				</a>
 				<div class="game-extra">

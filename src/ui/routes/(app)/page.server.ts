@@ -1,5 +1,6 @@
 import type { Loader, ParamsOf } from '@gambrel/router'
 import { platformLabel, platforms } from '../../../shared/library.ts'
+import type { ArtworkUrls } from '../../../shared/artwork.ts'
 import type { Game } from '../../../shared/library.ts'
 import type { PageContext } from '../../context.server.ts'
 import { formatDate, formatPlaytime } from '../../format.ts'
@@ -11,6 +12,7 @@ export type HomeGame = {
 	readonly favorite: boolean
 	readonly coverUrl: string | null
 	readonly heroUrl: string | null
+	readonly logoUrl: string | null
 	readonly canLaunch: boolean
 	readonly installed: boolean
 	readonly detail: string
@@ -57,7 +59,7 @@ export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }
 		...platforms.map((platform) => ({ id: `platform-${platform.key}`, title: platform.key === 'other' ? 'Other games' : `On ${platform.label}`, href: `/library?platform=${platform.key}`, games: library.list({ ...base, platform: platform.key, favoritesOnly: false, sort: 'name' }).games }))
 	].filter((group) => group.games.length > 0)
 	const ids = [...new Set(groups.flatMap((group) => group.games.map((game) => game.id)))]
-	const urls = new Map<string, { cover: string | null; hero: string | null }>()
+	const urls = new Map<string, ArtworkUrls>()
 	for (let start = 0; start < ids.length; start += artworkBatch) {
 		for (const [id, art] of artwork.urlsFor(ids.slice(start, start + artworkBatch))) urls.set(id, art)
 	}
@@ -68,6 +70,7 @@ export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }
 		favorite: game.favorite,
 		coverUrl: urls.get(game.id)?.cover ?? null,
 		heroUrl: urls.get(game.id)?.hero ?? null,
+		logoUrl: urls.get(game.id)?.logo ?? null,
 		canLaunch: launcher.canLaunch(game.source) && game.installState === 'installed',
 		installed: game.installState === 'installed',
 		detail: game.playtimeSeconds === 0 ? 'Not played yet' : `${formatPlaytime(game.playtimeSeconds)} played`,

@@ -14,6 +14,7 @@ Cairn reads its startup configuration from environment variables. Everything els
 | `CAIRN_STEAM_PATH` | detected | Absolute path to the Steam folder, when Steam is installed somewhere Cairn does not look. |
 | `CAIRN_EPIC_MANIFESTS` | detected on Windows | Absolute path to the Epic Games Launcher `Manifests` folder, to use a non-default location. |
 | `CAIRN_STEAMGRIDDB_KEY` | none | A SteamGridDB API key. Without it, artwork is not fetched. |
+| `CAIRN_IGDB_CLIENT_ID`, `CAIRN_IGDB_CLIENT_SECRET` | none | The client id and secret of a free Twitch developer application, to fetch artwork from IGDB. |
 
 Invalid values stop the runtime at startup with a message naming the variable.
 

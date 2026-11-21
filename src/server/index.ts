@@ -25,7 +25,7 @@ import { ArtworkService } from './library/artwork-service.ts'
 import { homedir } from 'node:os'
 import { SqliteDiscoveryRepository } from './database/repositories/discovery-repository.ts'
 import { IntegrationService } from './integrations/integration-service.ts'
-import { createSteamAdapter } from './integrations/steam/steam-adapter.ts'
+import { createSteamAdapter, createSteamRootFinder } from './integrations/steam/steam-adapter.ts'
 import { readSteamRegistryPath } from './integrations/steam/windows-registry.ts'
 import { createEpicAdapter } from './integrations/epic/epic-adapter.ts'
 import { SqliteFolderRepository } from './database/repositories/folder-repository.ts'
@@ -43,6 +43,12 @@ import { EmulatorService } from './emulators/emulator-service.ts'
 import { startProcess } from './os/start-process.ts'
 import { MetadataService } from './metadata/metadata-service.ts'
 import { SteamGridDbClient } from './metadata/steamgriddb-client.ts'
+import { SqliteAttemptRepository } from './database/repositories/attempt-repository.ts'
+import { IgdbClient } from './metadata/igdb-client.ts'
+import { createIgdbProvider } from './metadata/providers/igdb.ts'
+import { createLocalSteamProvider } from './metadata/providers/local-steam.ts'
+import { createSteamCdnProvider } from './metadata/providers/steam-cdn.ts'
+import { createSteamGridDbProvider } from './metadata/providers/steamgriddb.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -78,12 +84,14 @@ function main(): void {
 	const folders = new FolderService(new SqliteFolderRepository(database), { caseInsensitive: process.platform === 'win32' || process.platform === 'darwin' })
 	const collections = new CollectionService(new SqliteCollectionRepository(database))
 	const emulators = new EmulatorService(new SqliteEmulatorRepository(database), { platform: process.platform })
+	const steamOptions = { platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }
 	const adapters = [
 		createSteamAdapter({ platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }),
 		createEpicAdapter({ platform: process.platform, env: Bun.env, manifestsOverride: config.epicManifestsPath }),
 		createFolderAdapter({ listFolders: () => folders.list(), emulatorFor: (platform) => emulators.get(platform) }),
 	]
-	const integrations = new IntegrationService({ adapters, repository: new SqliteDiscoveryRepository(database, games), logger: logger.child('integrations') })
+	const integrations = new IntegrationService({ adapters, repository: new SqliteDiscoveryRepository(database, games), logger: logger.child('integrations'), afterScan: () => { metadata.startBulk('automatic') } })
+	void integrations.scanReady().then(() => { metadata.startBulk('automatic') })
 	pairing.start()
 	integrations.scanReady()
 	const library = new LibraryService(games)
@@ -91,7 +99,18 @@ function main(): void {
 	activity.start()
 	const launcher = new LaunchService({ library, adapters, opener: createUrlOpener(process.platform), starter: startProcess, activity, platform: process.platform, logger: logger.child('launcher') })
 	const artwork = new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media'))
-	const metadata = new MetadataService({ client: config.steamGridDbKey === null ? null : new SteamGridDbClient({ apiKey: config.steamGridDbKey }), library, artwork, logger: logger.child('metadata') })
+	const metadata = new MetadataService({
+		providers: [
+			createLocalSteamProvider({ locateRoot: createSteamRootFinder(steamOptions) }),
+			createSteamCdnProvider(),
+			createSteamGridDbProvider({ client: config.steamGridDbKey === null ? null : new SteamGridDbClient({ apiKey: config.steamGridDbKey }) }),
+			createIgdbProvider({ client: config.igdbClientId === null || config.igdbClientSecret === null ? null : new IgdbClient({ clientId: config.igdbClientId, clientSecret: config.igdbClientSecret }) })
+		],
+		library,
+		artwork,
+		attempts: new SqliteAttemptRepository(database),
+		logger: logger.child('metadata')
+	})
 	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, activity, metadata, emulators, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
 	logger.info(`${appName} runtime listening`, { url: server.url.href })
 	let stopping = false

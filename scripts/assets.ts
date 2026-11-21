@@ -3,7 +3,7 @@ import { cp } from 'node:fs/promises'
 import { join } from 'node:path'
 import { renderIcons } from './icons.ts'
 
-const stylesheets = ['tokens.css', 'base.css', 'shell.css', 'pages.css', 'library.css', 'home.css', 'browse.css']
+const stylesheets = ['tokens.css', 'base.css', 'shell.css', 'pages.css', 'library.css', 'home.css', 'browse.css', 'polish.css']
 
 const precache = [
 	'/offline',

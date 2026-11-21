@@ -9,7 +9,7 @@ export function registerMetadataRoutes(app: App, metadata: MetadataService): voi
 	})
 
 	app.post('/actions/metadata/fill', () => {
-		metadata.startBulk()
+		metadata.startBulk('manual')
 		return redirect('/integrations#metadata', 303)
 	})
 }

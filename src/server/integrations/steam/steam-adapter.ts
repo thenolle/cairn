@@ -190,3 +190,21 @@ export function createSteamAdapter(options: SteamAdapterOptions): PlatformAdapte
 		}
 	}
 }
+
+/** Finds Steam's folder the same way the adapter does. */
+export function createSteamRootFinder(options: SteamAdapterOptions): () => Promise<string | null> {
+	return async () => {
+		const registryPath = options.platform === 'win32' ? await options.readRegistry() : null
+		const candidates = steamRootCandidates({
+			platform: options.platform,
+			env: options.env,
+			home: options.home,
+			override: options.rootOverride,
+			registryPath
+		})
+		for (const candidate of candidates) {
+			if (await isDirectory(join(candidate, 'steamapps'))) return candidate
+		}
+		return null
+	}
+}
