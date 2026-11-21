@@ -12,11 +12,14 @@ export type GameDetails = {
 	readonly favorite: boolean
 	readonly playtimeSeconds: number
 	readonly createdAt: number
+	readonly coverUrl: string | null
+	readonly heroUrl: string | null
 }
 
 export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> = ({ params, context }) => {
 	const game = context.library.get(params.id)
 	if (game === undefined) return notFound()
+	const art = context.artwork.urlsOf(game.id)
 	return {
 		id: game.id,
 		name: game.name,
@@ -25,6 +28,8 @@ export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> =
 		installState: installStateLabel(game.installState),
 		favorite: game.favorite,
 		playtimeSeconds: game.playtimeSeconds,
-		createdAt: game.createdAt
+		createdAt: game.createdAt,
+		coverUrl: art.cover,
+		heroUrl: art.hero
 	}
 }

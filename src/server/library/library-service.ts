@@ -94,3 +94,7 @@ export class LibraryService {
 		return this.repository.count(filter)
 	}
 }
+
+export function isGameId(value: string): boolean {
+return idPattern.test(value)
+}

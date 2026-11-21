@@ -34,3 +34,13 @@ The runtime trusts code running as the current operating-system user, since that
 - Browser sessions are stored as hashes in the local database. They survive restarts and can be revoked.
 - All requests arrive from the same loopback address, so rate limiting applies to pairing attempts rather than to general traffic.
 - The interface's static files, web app manifest, service worker script and offline page are served without a session so the pairing page and the installed app can load. They contain no user data.
+
+## Uploaded images
+
+| Threat | Mitigation |
+| --- | --- |
+| A file disguised as an image | The type is read from the file's first bytes. Only PNG, JPEG and WebP are stored, and the type claimed by the browser is ignored. |
+| Scripts inside images | SVG is not accepted. Images are served with their detected type, `nosniff` and a policy that forbids scripts. |
+| Path traversal | Files are written to a folder named after the game's identifier, with a name made from the image kind and detected type. Request paths are never used to locate files. |
+| Oversized uploads | The request size must be declared and is limited to 8 MB plus form overhead before the body is read. |
+| Reading images without a session | Images are served only to paired browsers. |

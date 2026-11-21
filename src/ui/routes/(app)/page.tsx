@@ -1,86 +1,54 @@
 /** @jsxImportSource @gambrel/view */
-import { Plus } from '@gambrel/icons'
 import type { LoaderData, PageProps, ParamsOf } from '@gambrel/router'
 import type { Child } from '@gambrel/view'
-import { platforms } from '../../../shared/library.ts'
-import { CheckboxField, SelectField, TextField } from '../../components/fields.tsx'
-import { initials } from '../../format.ts'
-import type { loader } from './page.server.ts'
+import { GameCard } from '../../components/game-card.tsx'
+import { Hero } from '../../components/hero.tsx'
+import type { HomeGame, loader } from './page.server.ts'
 
-const platformOptions = [{ value: '', label: 'All platforms' }, ...platforms.map((platform) => ({ value: platform.key, label: platform.label }))]
-const sortOptions = [
-	{ value: 'name', label: 'Name' },
-	{ value: 'added', label: 'Recently added' }
-]
-
-export default function LibraryPage(props: PageProps<ParamsOf<'/'>, LoaderData<typeof loader>>): Child {
-	const view = props.data
-	const count = view.total === 1 ? '1 game' : `${view.total} games`
-
+function Row(props: { readonly id: string; readonly title: string; readonly href: string; readonly games: readonly HomeGame[] }): Child {
 	return (
-		<div class="page">
-			<header class="page-header page-header-row">
-				<div>
-					<h1>Library</h1>
-					{view.isEmpty ? null : <p class="muted">{count}</p>}
-				</div>
-				<a class="button" href="/games/new">
-					<Plus size={18} />
-					<span>Add game</span>
+		<section aria-labelledby={props.id}>
+			<div class="row-heading">
+				<h2 id={props.id}>{props.title}</h2>
+				<a class="muted" href={props.href}>
+					See all
 				</a>
-			</header>
+			</div>
+			<ul class="card-row">
+				{props.games.map((game) => (
+					<GameCard id={game.id} name={game.name} platform={game.platform} favorite={game.favorite} coverUrl={game.coverUrl} />
+				))}
+			</ul>
+		</section>
+	)
+}
 
-			{view.isEmpty ? (
+export default function HomePage(props: PageProps<ParamsOf<'/'>, LoaderData<typeof loader>>): Child {
+	const view = props.data
+	if (view.featured === null) {
+		return (
+			<div class="page">
+				<header class="page-header">
+					<h1>Welcome to Cairn</h1>
+					<p class="muted">Your games, saves and platforms in one library that lives on your computer.</p>
+				</header>
 				<section class="empty-state" aria-labelledby="empty-title">
 					<h2 id="empty-title">Your library is empty</h2>
 					<p class="muted">Add a game by hand. Games from launchers and emulators will join them once those integrations are set up.</p>
-					<a class="button" href="/games/new">
+					<a class="button button-primary" href="/games/new">
 						Add your first game
 					</a>
 				</section>
-			) : (
-				<div class="page">
-					<form class="toolbar" method="get" action="/" role="search">
-						<TextField name="q" label="Search" type="search" value={view.filters.text} required={false} maxLength="100" />
-						<SelectField name="platform" label="Platform" options={platformOptions} value={view.filters.platform} />
-						<SelectField name="sort" label="Sort by" options={sortOptions} value={view.filters.sort} />
-						<CheckboxField name="favorites" label="Favorites only" value="1" checked={view.filters.favoritesOnly} />
-						<button class="button button-secondary" type="submit">
-							Apply
-						</button>
-					</form>
-
-					{view.games.length === 0 ? (
-						<section class="empty-state" aria-labelledby="none-title">
-							<h2 id="none-title">No games match</h2>
-							<p class="muted">Try different words or remove a filter.</p>
-							<a class="button button-secondary" href="/">
-								Clear filters
-							</a>
-						</section>
-					) : (
-						<ul class="game-grid">
-							{view.games.map((game) => (
-								<li class="game-card">
-									<a href={`/games/${game.id}`}>
-										<span class="game-tile" aria-hidden="true">
-											{initials(game.name)}
-										</span>
-										<span class="game-name">{game.name}</span>
-										<span class="game-meta muted">{game.favorite ? `${game.platform} · Favorite` : game.platform}</span>
-									</a>
-								</li>
-							))}
-						</ul>
-					)}
-
-					{view.nextHref === null ? null : (
-						<a class="button button-secondary load-more" href={view.nextHref}>
-							Show more
-						</a>
-					)}
-				</div>
-			)}
+			</div>
+		)
+	}
+	return (
+		<div class="home">
+			<Hero game={view.featured} />
+			<div class="page">
+				{view.favorites.length === 0 ? null : <Row id="favorites-title" title="Favorites" href="/library?favorites=1" games={view.favorites} />}
+				<Row id="recent-title" title="Recently added" href="/library?sort=added" games={view.recent} />
+			</div>
 		</div>
 	)
 }

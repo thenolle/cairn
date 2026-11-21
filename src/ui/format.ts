@@ -34,3 +34,10 @@ export function formatPlaytime(seconds: number): string {
 	if (seconds <= 0) return 'No playtime recorded'
 	return formatDuration(seconds)
 }
+
+/** A stable color class for a game, used by tiles and heroes that have no artwork. */
+export function hueClass(name: string): string {
+let hash = 0
+for (const character of name) hash = (hash * 31 + (character.codePointAt(0) ?? 0)) >>> 0
+return `hue-${hash % 12}`
+}
