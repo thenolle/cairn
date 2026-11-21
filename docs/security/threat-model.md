@@ -67,3 +67,10 @@ The runtime trusts code running as the current operating-system user, since that
 | Endless or huge scans | Depth, entries and games are limited per scan. Symbolic links and hidden entries are skipped, so loops cannot occur. |
 | Reading file contents | Files are never opened. Only names and types are used. |
 | A disconnected drive hiding games | A scan with any unreadable folder never marks games as missing. |
+
+## Collections
+
+| Threat | Mitigation |
+| --- | --- |
+| Crafted identifiers or names | Identifiers must match the expected format. Names are cleaned, limited in length and stored through parameterized queries. |
+| Redirects after an action | The return address is the page that sent the request, accepted only when it is on the same host and not a network-path address. |

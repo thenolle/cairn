@@ -25,6 +25,7 @@ export function AppShell(props: AppShellProps): Child {
 					<ul>
 						<li><NavLink href="/" label="Home" active={pathname === '/'} /></li>
 						<li><NavLink href="/library" label="Library" active={pathname === '/library' || pathname.startsWith('/games')} /></li>
+						<li><NavLink href="/collections" label="Collections" active={pathname === '/collections'} /></li>
 						<li><NavLink href="/integrations" label="Integrations" active={pathname === '/integrations'} /></li>
 						<li><NavLink href="/runtime" label="Runtime" active={pathname === '/runtime'} /></li>
 					</ul>

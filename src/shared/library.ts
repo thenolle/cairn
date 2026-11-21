@@ -36,6 +36,7 @@ export interface GameFilter {
 	readonly text: string
 	readonly platform: string | null
 	readonly favoritesOnly: boolean
+	readonly collectionId?: string | null
 }
 
 export interface GameQuery extends GameFilter {

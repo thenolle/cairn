@@ -21,7 +21,7 @@ export default function LibraryPage(props: PageProps<ParamsOf<'/library'>, Loade
 		<div class="page">
 			<header class="page-header page-header-row">
 				<div>
-					<h1>Library</h1>
+					<h1>{view.title}</h1>
 					{view.isEmpty ? null : <p class="muted">{count}</p>}
 				</div>
 				<a class="button button-primary" href="/games/new">
@@ -43,6 +43,7 @@ export default function LibraryPage(props: PageProps<ParamsOf<'/library'>, Loade
 					<form class="toolbar" method="get" action="/library" role="search">
 						<TextField name="q" label="Search" type="search" value={view.filters.text} required={false} maxLength="100" />
 						<SelectField name="platform" label="Platform" options={platformOptions} value={view.filters.platform} />
+						<SelectField name="collection" label="Collection" options={view.collectionOptions} value={view.filters.collection} />
 						<SelectField name="sort" label="Sort by" options={sortOptions} value={view.filters.sort} />
 						<CheckboxField name="favorites" label="Favorites only" value="1" checked={view.filters.favoritesOnly} />
 						<button class="button button-secondary" type="submit">

@@ -24,11 +24,27 @@ export type HomeView = {
 	readonly rows: readonly HomeRow[]
 }
 
+type Group = { readonly id: string; readonly title: string; readonly href: string; readonly games: readonly Game[] }
+
 const base = { text: '', cursor: null, limit: 12 } as const
+const maxCollectionRows = 6
+const artworkBatch = 100
 
 export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }) => {
-	const { library, artwork } = context
-	const groups: { id: string; title: string; href: string; games: readonly Game[] }[] = [
+	const { library, artwork, collections } = context
+
+	const collectionGroups: Group[] = collections
+		.list()
+		.filter((collection) => collection.gameCount > 0)
+		.slice(0, maxCollectionRows)
+		.map((collection) => ({
+			id: `collection-${collection.id}`,
+			title: collection.name,
+			href: `/library?collection=${collection.id}`,
+			games: library.list({ ...base, platform: null, favoritesOnly: false, sort: 'name', collectionId: collection.id }).games
+		}))
+
+	const groups: Group[] = [
 		{
 			id: 'favorites',
 			title: 'Favorites',
@@ -41,6 +57,7 @@ export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }
 			href: '/library?sort=added',
 			games: library.list({ ...base, platform: null, favoritesOnly: false, sort: 'added' }).games
 		},
+		...collectionGroups,
 		...platforms.map((platform) => ({
 			id: `platform-${platform.key}`,
 			title: platform.key === 'other' ? 'Other games' : `On ${platform.label}`,
@@ -49,7 +66,12 @@ export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }
 		}))
 	].filter((group) => group.games.length > 0)
 
-	const urls = artwork.urlsFor(groups.flatMap((group) => group.games.map((game) => game.id)))
+	const ids = [...new Set(groups.flatMap((group) => group.games.map((game) => game.id)))]
+	const urls = new Map<string, { cover: string | null; hero: string | null }>()
+	for (let start = 0; start < ids.length; start += artworkBatch) {
+		for (const [id, art] of artwork.urlsFor(ids.slice(start, start + artworkBatch))) urls.set(id, art)
+	}
+
 	const toHome = (game: Game): HomeGame => ({
 		id: game.id,
 		name: game.name,

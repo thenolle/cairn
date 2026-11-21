@@ -80,6 +80,10 @@ function filterClauses(filter: GameFilter): { clauses: string[]; bindings: Bindi
 		bindings['platform'] = filter.platform
 	}
 	if (filter.favoritesOnly) clauses.push('favorite = 1')
+	if (filter.collectionId !== undefined && filter.collectionId !== null) {
+		clauses.push('id IN (SELECT game_id FROM collection_games WHERE collection_id = $collectionId)')
+		bindings['collectionId'] = filter.collectionId
+	}
 	return { clauses, bindings }
 }
 
