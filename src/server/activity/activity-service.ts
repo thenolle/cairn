@@ -5,6 +5,7 @@ import type { Logger } from '../logging/logger.ts'
 import { matchKey, rootKey } from '../os/path-match.ts'
 import type { ProcessLister } from '../os/process-list.ts'
 import { isGameId } from '../library/library-service.ts'
+import { isProcessAlive } from '../os/process-alive.ts'
 
 export interface ActivityServiceOptions {
 	readonly repository: SqliteActivityRepository
@@ -40,6 +41,7 @@ export class ActivityService {
 	private readonly newId: () => string
 	private readonly tracked = new Map<string, Tracked>()
 	private readonly resolved = new Map<string, string>()
+	private readonly pids = new Map<string, number>()
 	private timer: ReturnType<typeof setInterval> | undefined
 	private checking = false
 
@@ -51,6 +53,12 @@ export class ActivityService {
 		this.intervalMs = options.intervalMs ?? 10_000
 		this.now = options.now ?? Date.now
 		this.newId = options.newId ?? (() => crypto.randomUUID())
+	}
+
+	/** Follows a process Cairn started, such as an emulator, so the game counts as running until it exits. */
+	attach(gameId: string, pid: number): void {
+		this.pids.set(gameId, pid)
+		this.seen(gameId, this.now())
 	}
 
 	/** Resumes sessions left open by an earlier run, then starts checking. */
@@ -99,13 +107,19 @@ export class ActivityService {
 		try {
 			const locations = this.repository.locations()
 			if (locations.length === 0 && this.tracked.size === 0) return
-			const candidates = (await this.listProcesses()).map((entry) => matchKey(entry, this.caseInsensitive))
-			const at = this.now()
 			const active = new Set<string>()
-			for (const location of locations) {
-				const roots = await this.roots(location.path)
-				if (candidates.some((candidate) => roots.some((root) => candidate.startsWith(root)))) active.add(location.gameId)
+			for (const [gameId, pid] of this.pids) {
+				if (isProcessAlive(pid)) active.add(gameId)
+				else this.pids.delete(gameId)
 			}
+			if (locations.length > 0) {
+				const candidates = (await this.listProcesses()).map((entry) => matchKey(entry, this.caseInsensitive))
+				for (const location of locations) {
+					const roots = await this.roots(location.path)
+					if (candidates.some((candidate) => roots.some((root) => candidate.startsWith(root)))) active.add(location.gameId)
+				}
+			}
+			const at = this.now()
 			for (const gameId of active) this.seen(gameId, at)
 			for (const [gameId, entry] of this.tracked) {
 				if (active.has(gameId)) continue

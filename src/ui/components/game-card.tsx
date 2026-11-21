@@ -12,6 +12,8 @@ export interface GameCardProps {
 	readonly coverUrl: string | null
 	readonly heroUrl: string | null
 	readonly canLaunch: boolean
+	readonly installed: boolean
+	readonly detail: string
 	readonly rank?: number | undefined
 }
 
@@ -36,7 +38,11 @@ export function GameCard(props: GameCardProps): Child {
 						<a class="round round-more" href={`/games/${props.id}`} aria-label={`More about ${props.name}`} title="More info"><ChevronDownIcon size={18} /></a>
 					</div>
 					<p class="game-title">{props.name}</p>
-					<p class="game-meta">{props.platform}</p>
+					<p class="game-meta">
+						<span class={props.installed ? 'meta-good' : 'meta-dim'}>{props.installed ? 'Installed' : 'Not installed'}</span>
+						<span class="meta-box">{props.platform}</span>
+					</p>
+					<p class="game-detail">{props.detail}</p>
 				</div>
 			</div>
 		</li>

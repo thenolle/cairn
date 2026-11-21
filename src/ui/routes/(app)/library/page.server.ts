@@ -2,6 +2,7 @@ import type { Loader, ParamsOf } from '@gambrel/router'
 import { isPlatformKey, platformLabel } from '../../../../shared/library.ts'
 import type { GameFilter, GameSort } from '../../../../shared/library.ts'
 import type { PageContext } from '../../../context.server.ts'
+import { formatPlaytime } from '../../../format.ts'
 
 export type GameCardView = {
 	readonly id: string
@@ -10,6 +11,8 @@ export type GameCardView = {
 	readonly favorite: boolean
 	readonly coverUrl: string | null
 	readonly heroUrl: string | null
+	readonly installed: boolean
+	readonly detail: string
 	readonly canLaunch: boolean
 }
 
@@ -52,7 +55,7 @@ export const loader: Loader<ParamsOf<'/library'>, LibraryView, PageContext> = ({
 	}
 	return {
 		title: selected?.name ?? 'Library',
-		games: page.games.map((game) => ({ id: game.id, name: game.name, platform: platformLabel(game.platform), favorite: game.favorite, coverUrl: urls.get(game.id)?.cover ?? null, heroUrl: urls.get(game.id)?.hero ?? null, canLaunch: context.launcher.canLaunch(game.source) && game.installState === 'installed' })),
+		games: page.games.map((game) => ({ id: game.id, name: game.name, platform: platformLabel(game.platform), favorite: game.favorite, coverUrl: urls.get(game.id)?.cover ?? null, heroUrl: urls.get(game.id)?.hero ?? null, installed: game.installState === 'installed', detail: formatPlaytime((game as { readonly playtime?: number }).playtime ?? 0), canLaunch: context.launcher.canLaunch(game.source) && game.installState === 'installed' })),
 		total,
 		isEmpty: total === 0 && !filtered,
 		filters: {

@@ -1,32 +1,29 @@
-body {
-	background: var(--surface-0);
-}
-
 .topbar {
 	position: fixed;
 	inset: 0 0 auto 0;
-	z-index: 20;
+	z-index: 30;
 	display: flex;
 	align-items: center;
-	gap: 2rem;
+	gap: 1.75rem;
 	height: var(--topbar-height);
 	padding-inline: var(--gutter);
-	background: linear-gradient(180deg, rgb(0 0 0 / 0.85), transparent);
-	transition: background-color 0.3s var(--ease);
+	background-image: linear-gradient(180deg, rgb(0 0 0 / 0.7) 10%, transparent);
+	transition: background-color 0.4s var(--ease);
 }
 
 .topbar.is-solid {
-	background: var(--surface-0);
+	background-color: var(--surface-0);
+	background-image: none;
 }
 
 .wordmark {
 	display: flex;
 	align-items: center;
-	gap: 0.6rem;
+	gap: 0.5rem;
 	color: var(--accent);
-	font-size: 1.15rem;
-	font-weight: 800;
-	letter-spacing: 0.14em;
+	font-size: 1.35rem;
+	font-weight: 900;
+	letter-spacing: 0.12em;
 	text-decoration: none;
 	text-transform: uppercase;
 }
@@ -41,13 +38,13 @@ body {
 
 .topnav-link {
 	color: #e5e5e5;
-	font-size: 0.92rem;
+	font-size: 0.875rem;
 	text-decoration: none;
-	transition: color 0.2s var(--ease);
+	transition: color 0.4s var(--ease);
 }
 
 .topnav-link:hover {
-	color: var(--text-muted);
+	color: #b3b3b3;
 }
 
 .topnav-link[aria-current='page'] {
@@ -58,7 +55,7 @@ body {
 .topbar-tools {
 	display: flex;
 	align-items: center;
-	gap: 1rem;
+	gap: 1.25rem;
 	margin-left: auto;
 }
 
@@ -78,6 +75,7 @@ body {
 	background: transparent;
 	color: #ffffff;
 	font: inherit;
+	font-size: 0.875rem;
 	transition: width 0.25s var(--ease), padding 0.25s var(--ease);
 }
 
@@ -89,12 +87,11 @@ body {
 
 .topbar-search:hover input,
 .topbar-search:focus-within input {
-	width: min(14rem, 40vw);
+	width: min(15rem, 40vw);
 	padding-inline: 0.5rem;
 }
 
-.topbar-search button,
-.topbar-add {
+.topbar-search button {
 	display: grid;
 	place-items: center;
 	width: 2rem;
@@ -106,16 +103,76 @@ body {
 	cursor: pointer;
 }
 
+.account {
+	position: relative;
+}
+
+.account summary {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	list-style: none;
+	cursor: pointer;
+}
+
+.account summary::-webkit-details-marker {
+	display: none;
+}
+
+.account summary svg {
+	transition: transform 0.2s var(--ease);
+}
+
+.account[open] summary svg {
+	transform: rotate(180deg);
+}
+
 .avatar {
 	display: grid;
 	place-items: center;
 	width: 2rem;
 	height: 2rem;
-	border-radius: var(--radius-s);
+	border-radius: 4px;
 	background: var(--accent);
 	color: var(--accent-ink);
 	font-size: 0.9rem;
 	font-weight: 700;
+}
+
+.account-menu {
+	position: absolute;
+	top: calc(100% + 0.9rem);
+	right: 0;
+	min-width: 12rem;
+	margin: 0;
+	padding: 0.5rem 0;
+	border: 1px solid rgb(255 255 255 / 0.15);
+	background: rgb(0 0 0 / 0.9);
+	list-style: none;
+}
+
+.account-menu::before {
+	content: '';
+	position: absolute;
+	top: -0.5rem;
+	right: 1.1rem;
+	border: 0.5rem solid transparent;
+	border-top: 0;
+	border-bottom-color: #ffffff;
+}
+
+.account-menu a {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.5rem 1rem;
+	color: #ffffff;
+	font-size: 0.8125rem;
+	text-decoration: none;
+}
+
+.account-menu a:hover {
+	text-decoration: underline;
 }
 
 .shell-main {
@@ -124,6 +181,32 @@ body {
 
 .shell-main:focus {
 	outline: none;
+}
+
+.site-footer {
+	max-width: 62rem;
+	margin: 5rem auto 0;
+	padding: 0 var(--gutter) 4rem;
+	color: #757575;
+	font-size: 0.8125rem;
+}
+
+.footer-links {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: 0.9rem 1rem;
+	margin: 1.5rem 0;
+	padding: 0;
+	list-style: none;
+}
+
+.footer-links a {
+	color: #757575;
+	text-decoration: none;
+}
+
+.footer-links a:hover {
+	text-decoration: underline;
 }
 
 @media (max-width: 40rem) {
@@ -140,6 +223,7 @@ body {
 	.topnav {
 		order: 3;
 		width: 100%;
+		overflow-x: auto;
 	}
 
 	.topnav ul {
@@ -147,9 +231,11 @@ body {
 	}
 
 	.topnav-link {
+		display: block;
 		padding: 0.3rem 0.9rem;
 		border: 1px solid rgb(255 255 255 / 0.4);
 		border-radius: 999px;
+		white-space: nowrap;
 	}
 
 	.topnav-link[aria-current='page'] {

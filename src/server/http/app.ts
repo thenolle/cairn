@@ -29,6 +29,8 @@ import type { LaunchService } from '../launching/launch-service.ts'
 import { registerLaunchRoutes } from './routes/launch.ts'
 import type { ActivityService } from '../activity/activity-service.ts'
 import { registerActivityRoutes } from './routes/activity.ts'
+import type { EmulatorService } from '../emulators/emulator-service.ts'
+import { registerEmulatorRoutes } from './routes/emulators.ts'
 
 export interface HttpAppDependencies extends PairingRouteDependencies {
 	readonly runtime: RuntimeInfo
@@ -41,6 +43,7 @@ export interface HttpAppDependencies extends PairingRouteDependencies {
 	readonly collections: CollectionService
 	readonly launcher: LaunchService
 	readonly activity: ActivityService
+	readonly emulators: EmulatorService
 }
 
 /**
@@ -49,7 +52,7 @@ export interface HttpAppDependencies extends PairingRouteDependencies {
  */
 export function createHttpApp(dependencies: HttpAppDependencies): App {
 	const logger = dependencies.logger.child('http')
-	const { runtime, library, artwork, integrations, clientDirectory, development, folders, collections, launcher, activity } = dependencies
+	const { runtime, library, artwork, integrations, clientDirectory, development, folders, collections, launcher, activity, emulators } = dependencies
 	const documents = createDocumentHandler<PageContext>({ routes, components, hooks, entry: '/assets/client.js', development, renderError })
 	const app = createApp({ development })
 	app.use(securityHeaders())
@@ -67,7 +70,8 @@ export function createHttpApp(dependencies: HttpAppDependencies): App {
 	registerCollectionRoutes(app, collections)
 	registerLaunchRoutes(app, launcher)
 	registerActivityRoutes(app, activity)
-	app.notFound((context) => context.url.pathname.startsWith('/api/') ? errorResponse(404, 'not_found', 'No such endpoint.') : documents.handle(context.request, { ...context, runtime, library, artwork, integrations, folders, collections, launcher, activity }))
+	registerEmulatorRoutes(app, emulators)
+	app.notFound((context) => context.url.pathname.startsWith('/api/') ? errorResponse(404, 'not_found', 'No such endpoint.') : documents.handle(context.request, { ...context, runtime, library, artwork, integrations, folders, collections, launcher, activity, emulators }))
 	app.onError((error, { url }) => {
 		logger.error('Unhandled request error', { error, path: url.pathname })
 		return applySecurityHeaders(errorResponse(500, 'internal_error', 'Something went wrong.'), url.pathname)

@@ -9,7 +9,18 @@ export type CollectionRef = {
 	readonly name: string
 }
 
-export type SessionView = { readonly startedAt: number; readonly seconds: number }
+export type SessionView = {
+	readonly startedAt: number
+	readonly seconds: number
+}
+
+export type SimilarGame = {
+	readonly id: string
+	readonly name: string
+	readonly platform: string
+	readonly coverUrl: string | null
+	readonly heroUrl: string | null
+}
 
 export type GameDetails = {
 	readonly id: string
@@ -17,6 +28,7 @@ export type GameDetails = {
 	readonly platform: string
 	readonly source: string
 	readonly installState: string
+	readonly installed: boolean
 	readonly favorite: boolean
 	readonly playtimeSeconds: number
 	readonly lastPlayedAt: number | null
@@ -24,11 +36,12 @@ export type GameDetails = {
 	readonly coverUrl: string | null
 	readonly heroUrl: string | null
 	readonly canLaunch: boolean
+	readonly activeSince: number | null
 	readonly notice: { readonly message: string; readonly ok: boolean } | null
+	readonly sessions: readonly SessionView[]
 	readonly collections: readonly CollectionRef[]
 	readonly otherCollections: readonly CollectionRef[]
-	readonly activeSince: number | null
-	readonly sessions: readonly SessionView[]
+	readonly similar: readonly SimilarGame[]
 }
 
 export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> = ({ params, search, context }) => {
@@ -38,12 +51,15 @@ export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> =
 	const member = context.collections.forGame(game.id)
 	const memberIds = new Set(member.map((collection) => collection.id))
 	const outcome = new URLSearchParams(search).get('launch')
+	const peers = context.library.list({ text: '', platform: game.platform, favoritesOnly: false, sort: 'name', cursor: null, limit: 7 }).games.filter((peer) => peer.id !== game.id).slice(0, 6)
+	const peerArt = context.artwork.urlsFor(peers.map((peer) => peer.id))
 	return {
 		id: game.id,
 		name: game.name,
 		platform: platformLabel(game.platform),
 		source: sourceLabel(game.source),
 		installState: installStateLabel(game.installState),
+		installed: game.installState === 'installed',
 		favorite: game.favorite,
 		playtimeSeconds: game.playtimeSeconds,
 		lastPlayedAt: game.lastPlayedAt,
@@ -51,10 +67,17 @@ export const loader: Loader<ParamsOf<'/games/[id]'>, GameDetails, PageContext> =
 		coverUrl: art.cover,
 		heroUrl: art.hero,
 		canLaunch: context.launcher.canLaunch(game.source) && game.installState === 'installed',
+		activeSince: context.activity.activeSince(game.id),
 		notice: outcome !== null && isLaunchOutcome(outcome) ? { message: launchMessages[outcome], ok: outcome === 'started' } : null,
+		sessions: context.activity.recentSessions(game.id, 5).filter((session) => session.endedAt !== null).map((session) => ({ startedAt: session.startedAt, seconds: session.seconds })),
 		collections: member.map((collection) => ({ id: collection.id, name: collection.name })),
 		otherCollections: context.collections.list().filter((collection) => !memberIds.has(collection.id)).map((collection) => ({ id: collection.id, name: collection.name })),
-		activeSince: context.activity.activeSince(game.id),
-		sessions: context.activity.recentSessions(game.id, 5).filter((session) => session.endedAt !== null).map((session) => ({ startedAt: session.startedAt, seconds: session.seconds })),
+		similar: peers.map((peer) => ({
+			id: peer.id,
+			name: peer.name,
+			platform: platformLabel(peer.platform),
+			coverUrl: peerArt.get(peer.id)?.cover ?? null,
+			heroUrl: peerArt.get(peer.id)?.hero ?? null
+		}))
 	}
 }
