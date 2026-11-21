@@ -12,6 +12,7 @@ Cairn reads its startup configuration from environment variables. Everything els
 | `CAIRN_HOME`      | unset       | Absolute path. When set, every Cairn directory is placed under it.                                        |
 | `CAIRN_CLIENT_DIR` | `dist/client` | Directory containing the built interface. Relative paths resolve from the working directory. |
 | `CAIRN_STEAM_PATH` | detected | Absolute path to the Steam folder, when Steam is installed somewhere Cairn does not look. |
+| `CAIRN_EPIC_MANIFESTS` | detected on Windows | Absolute path to the Epic Games Launcher `Manifests` folder, to use a non-default location. |
 
 Invalid values stop the runtime at startup with a message naming the variable.
 

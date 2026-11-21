@@ -27,6 +27,7 @@ import { SqliteDiscoveryRepository } from './database/repositories/discovery-rep
 import { IntegrationService } from './integrations/integration-service.ts'
 import { createSteamAdapter } from './integrations/steam/steam-adapter.ts'
 import { readSteamRegistryPath } from './integrations/steam/windows-registry.ts'
+import { createEpicAdapter } from './integrations/epic/epic-adapter.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -73,13 +74,8 @@ function main(): void {
 	const games = new SqliteGameRepository(database)
 	const integrations = new IntegrationService({
 		adapters: [
-			createSteamAdapter({
-				platform: process.platform,
-				env: Bun.env,
-				home: homedir(),
-				rootOverride: config.steamPath,
-				readRegistry: readSteamRegistryPath
-			})
+			createSteamAdapter({ platform: process.platform, env: Bun.env, home: homedir(), rootOverride: config.steamPath, readRegistry: readSteamRegistryPath }),
+			createEpicAdapter({ platform: process.platform, env: Bun.env, manifestsOverride: config.epicManifestsPath }),
 		],
 		repository: new SqliteDiscoveryRepository(database, games),
 		logger: logger.child('integrations')

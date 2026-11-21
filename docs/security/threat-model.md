@@ -53,3 +53,8 @@ The runtime trusts code running as the current operating-system user, since that
 | Reading outside a library | Only `.acf` manifests named `appmanifest_<number>.acf` are read, from a library's `steamapps` folder. |
 | Running commands from launcher data | Nothing from these files is executed. The only process started during detection is a registry query with fixed arguments. |
 | Modifying a launcher | Adapters only read. |
+
+| Threat | Mitigation |
+| --- | --- |
+| Crafted Epic manifests | Only `.item` files up to 1 MB are parsed. Identifiers must match a strict pattern, names are cleaned, and malformed files are skipped with a warning. |
+| Reading an install folder | The install location is only checked for existence. Nothing in it is read or run. |
