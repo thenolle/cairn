@@ -19,6 +19,7 @@ export interface Config {
 	readonly clientDirectory: string
 	readonly directories: Directories
 	readonly steamPath: string | null
+	readonly epicManifestsPath: string | null
 }
 
 export interface ConfigSource {
@@ -27,9 +28,9 @@ export interface ConfigSource {
 	readonly home?: string
 }
 
-function parseSteamPath(raw: string | undefined): string | null {
+function parseAbsolutePath(name: string, raw: string | undefined): string | null {
 	if (raw === undefined || raw === '') return null
-	if (!isAbsolute(raw)) throw new CairnError('config_invalid', 'CAIRN_STEAM_PATH must be an absolute path.')
+	if (!isAbsolute(raw)) throw new CairnError('config_invalid', `${name} must be an absolute path.`)
 	return raw
 }
 
@@ -77,6 +78,7 @@ export function loadConfig(source: ConfigSource = {}): Config {
 			env,
 			home: source.home ?? homedir()
 		}),
-		steamPath: parseSteamPath(env['CAIRN_STEAM_PATH']),
+		steamPath: parseAbsolutePath('CAIRN_STEAM_PATH', env['CAIRN_STEAM_PATH']),
+		epicManifestsPath: parseAbsolutePath('CAIRN_EPIC_MANIFESTS', env['CAIRN_EPIC_MANIFESTS']),
 	}
 }

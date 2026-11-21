@@ -18,3 +18,14 @@ Cairn reads Steam's library list and the manifest of each installed game, across
 Steam does not publish a supported way to read this data. Cairn reads the files Steam itself writes, so a future Steam update could change what is available. If a scan reports a problem, the Integrations page shows it.
 
 Artwork and descriptions for Steam games are not provided by Steam's local files. Use a game's **Artwork** page to add images.
+
+## Epic Games
+
+On Windows, Cairn reads the manifest files the Epic Games Launcher writes for installed games. On other systems, set `CAIRN_EPIC_MANIFESTS` to the launcher's `Manifests` folder.
+
+- Only installed games can be found. Games you own but have not installed are not visible without signing in to Epic, which Cairn does not do.
+- New games are added as PC games. A game whose install folder no longer exists is marked as not installed, and a half-finished install is marked as unknown.
+- Add-ons and expansions are not added as separate games.
+- Names are not overwritten, so changes you make by hand are kept.
+
+Epic does not publish a supported way to read this data, so a future launcher update could change what is available.

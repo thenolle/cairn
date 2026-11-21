@@ -7,6 +7,7 @@ import { steamRootCandidates } from './locations.ts'
 import type { Env } from './locations.ts'
 import { parseVdf, vdfObject, vdfString } from './vdf.ts'
 import type { VdfObject } from './vdf.ts'
+import { cleanGameName } from '../clean-name.ts'
 
 export interface SteamAdapterOptions {
 	readonly platform: string
@@ -65,10 +66,6 @@ function installStateOf(flags: number): InstallState {
 	return 'unknown'
 }
 
-function cleanName(raw: string): string {
-	return raw.replace(/\p{Cc}/gu, ' ').replace(/\s+/gu, ' ').trim().slice(0, 200)
-}
-
 async function readLibraryPaths(root: string): Promise<readonly string[]> {
 	const paths = [root]
 	const text = await readSmallText(join(root, 'steamapps', 'libraryfolders.vdf'))
@@ -93,7 +90,7 @@ async function readLibraryPaths(root: string): Promise<readonly string[]> {
 }
 
 function toGame(appId: string, state: VdfObject): DiscoveredGame | null {
-	const name = cleanName(vdfString(state, 'name') ?? '')
+	const name = cleanGameName(vdfString(state, 'name') ?? '')
 	if (name === '' || ignoredAppIds.has(appId) || ignoredNamePrefixes.some((prefix) => name.startsWith(prefix))) return null
 	return { externalId: appId, name, platform: 'pc', installState: installStateOf(Number(vdfString(state, 'StateFlags') ?? '0')) }
 }
