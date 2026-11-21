@@ -1,6 +1,6 @@
 import type { Loader, ParamsOf } from '@gambrel/router'
+import { platformLabel, platforms } from '../../../shared/library.ts'
 import type { Game } from '../../../shared/library.ts'
-import { platformLabel } from '../../../shared/library.ts'
 import type { PageContext } from '../../context.server.ts'
 
 export type HomeGame = {
@@ -12,20 +12,44 @@ export type HomeGame = {
 	readonly heroUrl: string | null
 }
 
-export type HomeView = {
-	readonly featured: HomeGame | null
-	readonly favorites: readonly HomeGame[]
-	readonly recent: readonly HomeGame[]
+export type HomeRow = {
+	readonly id: string
+	readonly title: string
+	readonly href: string
+	readonly games: readonly HomeGame[]
 }
 
-const base = { text: '', platform: null, cursor: null, limit: 12 } as const
+export type HomeView = {
+	readonly featured: HomeGame | null
+	readonly rows: readonly HomeRow[]
+}
+
+const base = { text: '', cursor: null, limit: 12 } as const
 
 export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }) => {
 	const { library, artwork } = context
-	const favorites = library.list({ ...base, favoritesOnly: true, sort: 'name' }).games
-	const recent = library.list({ ...base, favoritesOnly: false, sort: 'added' }).games
-	const urls = artwork.urlsFor([...favorites, ...recent].map((game) => game.id))
+	const groups: { id: string; title: string; href: string; games: readonly Game[] }[] = [
+		{
+			id: 'favorites',
+			title: 'Favorites',
+			href: '/library?favorites=1',
+			games: library.list({ ...base, platform: null, favoritesOnly: true, sort: 'name' }).games
+		},
+		{
+			id: 'recent',
+			title: 'Recently added',
+			href: '/library?sort=added',
+			games: library.list({ ...base, platform: null, favoritesOnly: false, sort: 'added' }).games
+		},
+		...platforms.map((platform) => ({
+			id: `platform-${platform.key}`,
+			title: platform.key === 'other' ? 'Other games' : `On ${platform.label}`,
+			href: `/library?platform=${platform.key}`,
+			games: library.list({ ...base, platform: platform.key, favoritesOnly: false, sort: 'name' }).games
+		}))
+	].filter((group) => group.games.length > 0)
 
+	const urls = artwork.urlsFor(groups.flatMap((group) => group.games.map((game) => game.id)))
 	const toHome = (game: Game): HomeGame => ({
 		id: game.id,
 		name: game.name,
@@ -35,9 +59,8 @@ export const loader: Loader<ParamsOf<'/'>, HomeView, PageContext> = ({ context }
 		heroUrl: urls.get(game.id)?.hero ?? null
 	})
 
-	const favoriteViews = favorites.map(toHome)
-	const recentViews = recent.map(toHome)
-	const featured =
-		[...favoriteViews, ...recentViews].find((game) => game.heroUrl !== null) ?? favoriteViews[0] ?? recentViews[0] ?? null
-	return { featured, favorites: favoriteViews, recent: recentViews }
+	const rows = groups.map((group) => ({ id: group.id, title: group.title, href: group.href, games: group.games.map(toHome) }))
+	const all = rows.flatMap((row) => row.games)
+	const featured = all.find((game) => game.heroUrl !== null) ?? all[0] ?? null
+	return { featured, rows }
 }

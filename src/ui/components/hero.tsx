@@ -20,15 +20,21 @@ export function Hero(props: HeroProps): Child {
 		<section class={`hero ${hueClass(game.name)}`} aria-label="Featured game">
 			{game.heroUrl === null ? null : <img class="hero-art" src={game.heroUrl} alt="" decoding="async" />}
 			<div class="hero-body">
-				<p class="eyebrow">{game.favorite ? `Favorite · ${game.platform}` : game.platform}</p>
 				<h1>{game.name}</h1>
+				<p class="hero-meta">
+					<span class="badge">{game.platform}</span>
+					{game.favorite ? <span>In your favorites</span> : null}
+				</p>
 				<div class="hero-actions">
 					<a class="button button-primary" href={`/games/${game.id}`}>
-						View game
+						Open game
 					</a>
-					<a class="button button-glass" href="/library">
-						Browse library
-					</a>
+					<form method="post" action={`/actions/games/${game.id}/favorite`}>
+						<input type="hidden" name="favorite" value={game.favorite ? '0' : '1'} />
+						<button class="button button-glass" type="submit">
+							{game.favorite ? 'Remove from favorites' : 'Add to favorites'}
+						</button>
+					</form>
 				</div>
 			</div>
 		</section>

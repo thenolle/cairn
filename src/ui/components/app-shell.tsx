@@ -1,18 +1,11 @@
 /** @jsxImportSource @gambrel/view */
-import { Compass, FolderOpen, Gauge } from '@gambrel/icons'
+import { Plus } from '@gambrel/icons'
 import type { Child } from '@gambrel/view'
-import { GameTile } from './game-tile.tsx'
+import { SearchIcon } from '../icons.ts'
 import { NavLink } from './nav-link.tsx'
 
-export type PinnedGame = {
-	readonly id: string
-	readonly name: string
-	readonly coverUrl: string | null
-}
-
-export type AppShellProps = {
+export interface AppShellProps {
 	readonly pathname: string
-	readonly pinned: readonly PinnedGame[]
 	readonly children: Child
 }
 
@@ -23,41 +16,42 @@ export function AppShell(props: AppShellProps): Child {
 			<a class="skip-link" href="#main">
 				Skip to content
 			</a>
-			<nav class="shell-nav" aria-label="Primary">
-				<a class="brand" href="/" aria-label="Cairn home">
-					<img src="/assets/favicon.svg" alt="" width="36" height="36" />
+			<header class="topbar" data-topbar>
+				<a class="wordmark" href="/" aria-label="Cairn home">
+					<img src="/assets/favicon.svg" alt="" width="28" height="28" />
+					<span>Cairn</span>
 				</a>
-				<ul class="nav-list">
-					<li>
-						<NavLink href="/" label="Home" active={pathname === '/'}>
-							<Compass size={22} />
-						</NavLink>
-					</li>
-					<li>
-						<NavLink href="/library" label="Library" active={pathname === '/library' || pathname.startsWith('/games')}>
-							<FolderOpen size={22} />
-						</NavLink>
-					</li>
-				</ul>
-				{props.pinned.length === 0 ? null : (
-					<ul class="pinned-list" aria-label="Favorites">
-						{props.pinned.map((game) => (
-							<li>
-								<a class="pinned-game" href={`/games/${game.id}`} aria-label={game.name} title={game.name}>
-									<GameTile name={game.name} coverUrl={game.coverUrl} />
-								</a>
-							</li>
-						))}
+				<nav class="topnav" aria-label="Primary">
+					<ul>
+						<li>
+							<NavLink href="/" label="Home" active={pathname === '/'} />
+						</li>
+						<li>
+							<NavLink href="/library" label="Library" active={pathname === '/library' || pathname.startsWith('/games')} />
+						</li>
+						<li>
+							<NavLink href="/runtime" label="Runtime" active={pathname === '/runtime'} />
+						</li>
 					</ul>
-				)}
-				<ul class="nav-list nav-foot">
-					<li>
-						<NavLink href="/runtime" label="Runtime" active={pathname === '/runtime'}>
-							<Gauge size={22} />
-						</NavLink>
-					</li>
-				</ul>
-			</nav>
+				</nav>
+				<div class="topbar-tools">
+					<form class="topbar-search" role="search" action="/library" method="get">
+						<label class="visually-hidden" for="topbar-search">
+							Search the library
+						</label>
+						<input id="topbar-search" type="search" name="q" placeholder="Titles" maxlength="100" autocomplete="off" />
+						<button type="submit" aria-label="Search">
+							<SearchIcon size={20} />
+						</button>
+					</form>
+					<a class="topbar-add" href="/games/new" aria-label="Add game">
+						<Plus size={22} />
+					</a>
+					<span class="avatar" role="img" aria-label="Guest profile">
+						G
+					</span>
+				</div>
+			</header>
 			<main id="main" class="shell-main" tabindex="-1">
 				{props.children}
 			</main>
