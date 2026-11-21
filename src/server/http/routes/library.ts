@@ -6,6 +6,7 @@ import { parseGameForm } from '../../library/game-input.ts'
 import type { LibraryService } from '../../library/library-service.ts'
 import { errorResponse } from '../errors.ts'
 import { readForm } from '../forms.ts'
+import { backTarget } from '../redirect-back.ts'
 
 export interface LibraryRouteDependencies {
 	readonly library: LibraryService
@@ -40,7 +41,7 @@ export function registerLibraryRoutes(app: App, { library, artwork, logger }: Li
 		const form = await readForm(request)
 		if (form === null) return invalidForm()
 		const found = library.setFavorite(params.id, form.get('favorite') === '1')
-		return redirect(found ? `/games/${params.id}` : '/library', 303)
+		return redirect(found ? backTarget(request, `/games/${params.id}`) : '/library', 303)
 	})
 
 	app.post('/actions/games/:id/delete', async ({ params }) => {

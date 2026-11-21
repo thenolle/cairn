@@ -1,5 +1,6 @@
 import { hydrateRoutes } from '@gambrel/browser'
 import { components, routes } from '../../.gambrel/manifest.client.ts'
+import { initRows, initTopbar } from './enhance.ts'
 import { registerServiceWorker } from './pwa.ts'
 
 try {
@@ -8,4 +9,6 @@ try {
 	console.error('[cairn] hydration failed; the server-rendered page stays as it is', error)
 }
 
+initTopbar()
+initRows()
 registerServiceWorker()
