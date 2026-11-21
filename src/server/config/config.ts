@@ -1,5 +1,5 @@
 import { homedir } from 'node:os'
-import { resolve } from 'node:path'
+import { isAbsolute, resolve } from 'node:path'
 import { CairnError } from '../../shared/errors.ts'
 import { logLevels } from '../logging/logger.ts'
 import type { LogLevel } from '../logging/logger.ts'
@@ -18,12 +18,19 @@ export interface Config {
 	readonly development: boolean
 	readonly clientDirectory: string
 	readonly directories: Directories
+	readonly steamPath: string | null
 }
 
 export interface ConfigSource {
 	readonly env?: Readonly<Record<string, string | undefined>>
 	readonly platform?: string
 	readonly home?: string
+}
+
+function parseSteamPath(raw: string | undefined): string | null {
+	if (raw === undefined || raw === '') return null
+	if (!isAbsolute(raw)) throw new CairnError('config_invalid', 'CAIRN_STEAM_PATH must be an absolute path.')
+	return raw
 }
 
 function parseHost(raw: string | undefined): string {
@@ -69,6 +76,7 @@ export function loadConfig(source: ConfigSource = {}): Config {
 			platform: source.platform ?? process.platform,
 			env,
 			home: source.home ?? homedir()
-		})
+		}),
+		steamPath: parseSteamPath(env['CAIRN_STEAM_PATH']),
 	}
 }

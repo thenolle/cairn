@@ -11,6 +11,7 @@ Cairn reads its startup configuration from environment variables. Everything els
 | `CAIRN_LOG_LEVEL` | `info`      | Minimum log level: `debug`, `info`, `warn` or `error`.                                                    |
 | `CAIRN_HOME`      | unset       | Absolute path. When set, every Cairn directory is placed under it.                                        |
 | `CAIRN_CLIENT_DIR` | `dist/client` | Directory containing the built interface. Relative paths resolve from the working directory. |
+| `CAIRN_STEAM_PATH` | detected | Absolute path to the Steam folder, when Steam is installed somewhere Cairn does not look. |
 
 Invalid values stop the runtime at startup with a message naming the variable.
 

@@ -23,15 +23,10 @@ export function AppShell(props: AppShellProps): Child {
 				</a>
 				<nav class="topnav" aria-label="Primary">
 					<ul>
-						<li>
-							<NavLink href="/" label="Home" active={pathname === '/'} />
-						</li>
-						<li>
-							<NavLink href="/library" label="Library" active={pathname === '/library' || pathname.startsWith('/games')} />
-						</li>
-						<li>
-							<NavLink href="/runtime" label="Runtime" active={pathname === '/runtime'} />
-						</li>
+						<li><NavLink href="/" label="Home" active={pathname === '/'} /></li>
+						<li><NavLink href="/library" label="Library" active={pathname === '/library' || pathname.startsWith('/games')} /></li>
+						<li><NavLink href="/integrations" label="Integrations" active={pathname === '/integrations'} /></li>
+						<li><NavLink href="/runtime" label="Runtime" active={pathname === '/runtime'} /></li>
 					</ul>
 				</nav>
 				<div class="topbar-tools">

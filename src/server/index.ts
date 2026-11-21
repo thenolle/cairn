@@ -22,6 +22,11 @@ import { SqliteGameRepository } from './database/repositories/game-repository.ts
 import { LibraryService } from './library/library-service.ts'
 import { SqliteArtworkRepository } from './database/repositories/artwork-repository.ts'
 import { ArtworkService } from './library/artwork-service.ts'
+import { homedir } from 'node:os'
+import { SqliteDiscoveryRepository } from './database/repositories/discovery-repository.ts'
+import { IntegrationService } from './integrations/integration-service.ts'
+import { createSteamAdapter } from './integrations/steam/steam-adapter.ts'
+import { readSteamRegistryPath } from './integrations/steam/windows-registry.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -65,7 +70,23 @@ function main(): void {
 	const host = config.host.includes(':') ? `[${config.host}]` : config.host
 	const runtime = createRuntimeInfo({ schemaVersion: migration.to, address: `${host}:${config.port}` })
 
+	const games = new SqliteGameRepository(database)
+	const integrations = new IntegrationService({
+		adapters: [
+			createSteamAdapter({
+				platform: process.platform,
+				env: Bun.env,
+				home: homedir(),
+				rootOverride: config.steamPath,
+				readRegistry: readSteamRegistryPath
+			})
+		],
+		repository: new SqliteDiscoveryRepository(database, games),
+		logger: logger.child('integrations')
+	})
+
 	pairing.start()
+	void integrations.scanReady()
 	const server = startServer(
 		createHttpApp({
 			pairing,
@@ -73,7 +94,8 @@ function main(): void {
 			limiter,
 			logger,
 			runtime,
-			library: new LibraryService(new SqliteGameRepository(database)),
+			library: new LibraryService(games),
+			integrations,
 			artwork: new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media')),
 			clientDirectory: config.clientDirectory,
 			development: config.development
