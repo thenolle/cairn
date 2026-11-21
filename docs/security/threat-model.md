@@ -101,3 +101,13 @@ The runtime trusts code running as the current operating-system user, since that
 | Argument injection through file names | The game's path is substituted into one argument. No shell is used. Templates are limited to spaces, `{game}` and no other braces. |
 | Escaping the game folder | A game's relative path may not contain empty, `.` or `..` parts, and its file type must match the platform. |
 | Changing settings from the web | Emulator settings are form actions behind the same pairing, host and origin checks as every other action. |
+
+## Artwork provider
+
+| Threat | Mitigation |
+| --- | --- |
+| Leaking the API key | It is read from the environment, sent only in a request header and never stored, logged or shown. |
+| Fetching from unintended hosts | Image links must be HTTPS on steamgriddb.com, without credentials, and every redirect is checked the same way. |
+| Oversized or disguised downloads | Downloads stop at the artwork size limit, and the content is validated by its bytes before it is stored. |
+| Hammering the provider | One request at a time with pauses, a cap per run, and a stop on rate limiting. Runs only start when you ask. |
+| Overwriting your artwork | Only missing covers and banners are filled. |

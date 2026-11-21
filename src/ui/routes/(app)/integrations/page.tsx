@@ -7,6 +7,7 @@ import { formatTimestamp } from '../../../format.ts'
 import type { loader } from './page.server.ts'
 import { FolderSection } from '../../../components/folder-section.tsx'
 import { EmulatorSection } from '../../../components/emulator-section.tsx'
+import { MetadataSection } from '../../../components/metadata-section.tsx'
 
 function describe(status: CapabilityStatus): { readonly text: string; readonly note: string } {
 	return status.supported ? { text: 'Supported', note: '' } : { text: 'Not available', note: status.reason }
@@ -73,6 +74,7 @@ export default function IntegrationsPage(props: PageProps<ParamsOf<'/integration
 			</header>
 			<FolderSection folders={props.data.folders} error={props.data.folderError} />
 			<EmulatorSection emulators={props.data.emulators} error={props.data.emulatorError} />
+			<MetadataSection status={props.data.metadata} />
 			{props.data.integrations.map((integration) => (<Integration integration={integration} />))}
 		</div>
 	)

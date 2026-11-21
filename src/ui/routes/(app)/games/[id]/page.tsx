@@ -75,6 +75,7 @@ export default function GamePage(props: PageProps<ParamsOf<'/games/[id]'>, Loade
 					<p><span class="dim">Platform:</span> {game.platform}</p>
 					<p><span class="dim">Source:</span> {game.source}</p>
 					<p><a href={`/games/${game.id}/artwork`}>Edit artwork</a></p>
+					{game.metadataAvailable ? (<form method="post" action={`/actions/games/${game.id}/metadata`}><button class="button button-secondary" type="submit">Find missing artwork</button></form>) : null}
 					<p><a href={`/games/${game.id}/edit`}>Edit details</a></p>
 				</div>
 			</div>

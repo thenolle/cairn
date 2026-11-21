@@ -20,6 +20,7 @@ export interface Config {
 	readonly directories: Directories
 	readonly steamPath: string | null
 	readonly epicManifestsPath: string | null
+	readonly steamGridDbKey: string | null
 }
 
 export interface ConfigSource {
@@ -64,6 +65,12 @@ function parseClientDirectory(raw: string | undefined): string {
 	return resolve(raw === undefined || raw === '' ? 'dist/client' : raw)
 }
 
+function parseApiKey(name: string, raw: string | undefined): string | null {
+	if (raw === undefined || raw === '') return null
+	if (!/^[A-Za-z0-9_-]{16,128}$/u.test(raw)) throw new CairnError('config_invalid', `${name} does not look like an API key.`)
+	return raw
+}
+
 /** Reads the runtime configuration from environment variables. Throws a `CairnError` when a value is invalid. */
 export function loadConfig(source: ConfigSource = {}): Config {
 	const env = source.env ?? Bun.env
@@ -80,5 +87,6 @@ export function loadConfig(source: ConfigSource = {}): Config {
 		}),
 		steamPath: parseAbsolutePath('CAIRN_STEAM_PATH', env['CAIRN_STEAM_PATH']),
 		epicManifestsPath: parseAbsolutePath('CAIRN_EPIC_MANIFESTS', env['CAIRN_EPIC_MANIFESTS']),
+		steamGridDbKey: parseApiKey('CAIRN_STEAMGRIDDB_KEY', env['CAIRN_STEAMGRIDDB_KEY']),
 	}
 }

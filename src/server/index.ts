@@ -41,6 +41,8 @@ import { createProcessLister } from './os/process-list.ts'
 import { SqliteEmulatorRepository } from './database/repositories/emulator-repository.ts'
 import { EmulatorService } from './emulators/emulator-service.ts'
 import { startProcess } from './os/start-process.ts'
+import { MetadataService } from './metadata/metadata-service.ts'
+import { SteamGridDbClient } from './metadata/steamgriddb-client.ts'
 
 function ensureDirectories(directories: Directories): void {
 	for (const directory of Object.values(directories)) {
@@ -89,7 +91,8 @@ function main(): void {
 	activity.start()
 	const launcher = new LaunchService({ library, adapters, opener: createUrlOpener(process.platform), starter: startProcess, activity, platform: process.platform, logger: logger.child('launcher') })
 	const artwork = new ArtworkService(new SqliteArtworkRepository(database), join(config.directories.data, 'media'))
-	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, activity, emulators, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
+	const metadata = new MetadataService({ client: config.steamGridDbKey === null ? null : new SteamGridDbClient({ apiKey: config.steamGridDbKey }), library, artwork, logger: logger.child('metadata') })
+	const server = startServer(createHttpApp({ pairing, sessions, limiter, logger, runtime, library, integrations, folders, collections, launcher, activity, metadata, emulators, artwork, clientDirectory: config.clientDirectory, development: config.development }), config.host, config.port)
 	logger.info(`${appName} runtime listening`, { url: server.url.href })
 	let stopping = false
 	const shutdown = async (): Promise<void> => {
